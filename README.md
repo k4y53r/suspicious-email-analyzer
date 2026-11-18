@@ -18,13 +18,21 @@ flowchart LR
     U["You: forward a suspicious mail"] --> MB[("Your mailbox (IMAP)")]
     subgraph HOST["Analyzer host (LXC or Debian)"]
         T["timer or cron every 2 min: run.sh"] --> B["buzon.py: one pass over the INBOX"]
-        B --> A["analizar_correo.py: parse and technical indicators"]
+        B --> F{"Sender in REMITENTES, not an auto-reply, DKIM ok (if EXIGIR_DKIM)?"}
+        F -- "no" --> SK["Marked read, no reply"]
+        F -- "yes" --> D{"Already analysed? Fingerprint, or Message-ID and subject"}
+        D -- "yes" --> R1["Reply with the stored result (YA ANALIZADO): no model, no lookups"]
+        D -- "no" --> A["analizar_correo.py: parse and technical indicators"]
         A --> E["enriquecer.py: lists, RDAP, abuse.ch, OTX (optional)"]
         A --> L["Ollama: local model, second opinion"]
-        B --> S[("State: analisis.db and .eml copies")]
+        E --> V["Final risk and verdict"]
+        L --> V
+        V --> S[("State: analisis.db and .eml copies")]
+        V --> R2["Reply: verdict and analisis.json"]
     end
     MB --> B
-    B -->|"reply: verdict and analisis.json"| U
+    R1 --> U
+    R2 --> U
     E -.-> NET(("Public reputation services"))
     S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["CSV lists of malicious IPs and domains"]
     CSV --> GL["Graylog lookup tables and alerts"]
@@ -189,6 +197,32 @@ unclosed tags, real types and ZIP attachments; run it after touching `INYECCION`
 mismatches. The repository only contains the synthetic samples in `pruebas/sinteticos/` (`*.example` or invented
 domains, no personal data); add your own mails to `corpus.tsv` keeping them **out of git**, because real ones contain
 personal data. With a model it takes ~1 min per mail (`PAUSA` seconds of rest between them, 60 by default).
+
+## Choosing a model
+
+The model gives a second opinion; the deterministic indicators decide most verdicts. A comparison on the 23 synthetic
+mails of `pruebas/corpus.tsv` (same code, only `--modelo` changes; enrichment on) gives a reference point:
+
+| Model | Within the expected verdict | Model time per mail (median / max) | Whole corpus |
+|---|---|---|---|
+| `qwen2.5:7b` (default) | 23 / 23 | 64 s / 143 s | 28 min |
+| `qwen2.5:14b` | 22 / 23 | 145 s / 298 s | 59 min |
+
+Measured on a 6-core Xeon E5-2620 v1 (AVX only, DDR3-1067, no GPU) in a container with 10 vCPU and 28 GB of RAM; times
+scale with your hardware, and a GPU changes them a lot.
+
+- **Verdict and risk differed in 6 of 23 mails.** The 14b classifies better the mails the 7b called "legitimate" while
+  they were malicious (hidden-text injection, macro and encrypted attachments, a bait mail), but the final verdict
+  barely moved because the technical indicators already got them right.
+- **The larger model is not automatically better.** The 14b was the only one to miss: it scored a bait mail without a
+  link as malicious (65) where the 7b said suspicious (50), and the expected answer was anything below malicious.
+- **It costs about 2.3 times the time and 2 times the memory** (the 14b needs ~9 GB of free RAM next to the system).
+- This corpus is synthetic and made to exercise the rules, not to fool the model. Do not read it as a ranking: it is a
+  starting point. To compare on your own mail, run `pruebas/probar.sh <model> out.jsonl` once per model and diff the
+  results; keep your real corpus **out of git**. To switch: `--modelo` in `analizar_correo.py`, or
+  `ANALISTA_CORREO_MODELO` (see `contrib/despliegue/README.md` for the timer).
+- Rule of thumb: start with the default; try a larger one if you have memory to spare, mails where the text matters more
+  than the headers, or a GPU; use `qwen2.5:3b` only when memory is tight (not measured here).
 
 ## Mailbox mode (`buzon.py`)
 

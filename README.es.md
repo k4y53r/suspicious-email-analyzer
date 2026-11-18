@@ -16,13 +16,21 @@ flowchart LR
     U["Tú: reenvías un correo sospechoso"] --> MB[("Tu buzón (IMAP)")]
     subgraph HOST["Equipo del analizador (LXC o Debian)"]
         T["temporizador o cron cada 2 min: run.sh"] --> B["buzon.py: una pasada por el INBOX"]
-        B --> A["analizar_correo.py: desmonta y puntúa indicadores"]
+        B --> F{"¿Remitente en REMITENTES, no es respuesta automática, DKIM ok (si EXIGIR_DKIM)?"}
+        F -- "no" --> SK["Se marca leído, sin respuesta"]
+        F -- "sí" --> D{"¿Ya analizado? Huella, o Message-ID y asunto"}
+        D -- "sí" --> R1["Responde con el resultado guardado (YA ANALIZADO): sin modelo ni consultas"]
+        D -- "no" --> A["analizar_correo.py: desmonta y puntúa indicadores"]
         A --> E["enriquecer.py: listas, RDAP, abuse.ch, OTX (opcional)"]
         A --> L["Ollama: modelo local, segunda opinión"]
-        B --> S[("Estado: analisis.db y copias .eml")]
+        E --> V["Riesgo final y veredicto"]
+        L --> V
+        V --> S[("Estado: analisis.db y copias .eml")]
+        V --> R2["Respuesta: veredicto y analisis.json"]
     end
     MB --> B
-    B -->|"respuesta: veredicto y analisis.json"| U
+    R1 --> U
+    R2 --> U
     E -.-> NET(("Servicios públicos de reputación"))
     S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["Listas CSV de IPs y dominios maliciosos"]
     CSV --> GL["Graylog: lookup tables y alertas"]
@@ -200,6 +208,33 @@ HTML con etiquetas sin cerrar, tipos reales y adjuntos ZIP; pásalo tras tocar `
 si coincide. En el repo solo hay los sintéticos de `pruebas/sinteticos/` (dominios `*.example` o inventados, sin datos
 personales); añade tus propios correos a `corpus.tsv` guardándolos **fuera de git**, porque los reales tienen datos
 personales. Con modelo tarda ~1 min por correo (`PAUSA` segundos de descanso entre ellos, 60 por defecto).
+
+## Elegir modelo
+
+El modelo da una segunda opinión; los indicadores deterministas deciden la mayoría de los veredictos. Una comparación
+sobre los 23 correos sintéticos de `pruebas/corpus.tsv` (mismo código, solo cambia `--modelo`; con enriquecimiento) da un
+punto de referencia:
+
+| Modelo | Dentro del veredicto esperado | Tiempo del modelo por correo (mediana / máx) | Corpus entero |
+|---|---|---|---|
+| `qwen2.5:7b` (por defecto) | 23 / 23 | 64 s / 143 s | 28 min |
+| `qwen2.5:14b` | 22 / 23 | 145 s / 298 s | 59 min |
+
+Medido en un Xeon E5-2620 v1 de 6 núcleos (solo AVX, DDR3-1067, sin GPU) con un contenedor de 10 vCPU y 28 GB de RAM; los
+tiempos escalan con tu equipo y una GPU los cambia mucho.
+
+- **Veredicto y riesgo distintos en 6 de 23 correos.** El 14b clasifica mejor los que el 7b llamaba «legítimos» siendo
+  maliciosos (inyección con texto oculto, adjuntos con macros o cifrados, un cebo), pero el veredicto final casi no se
+  movió, porque los indicadores técnicos ya acertaban.
+- **El modelo mayor no es mejor sin más.** El 14b fue el único que falló: puntuó como malicioso (65) un cebo sin enlace
+  donde el 7b dijo sospechoso (50), y lo esperado era cualquier cosa por debajo de malicioso.
+- **Cuesta unas 2,3 veces el tiempo y el doble de memoria** (el 14b necesita ~9 GB libres además del sistema).
+- Este corpus es sintético y está hecho para ejercitar las reglas, no para engañar al modelo. No es un ranking: es un
+  punto de partida. Para comparar con tu correo, pasa `pruebas/probar.sh <modelo> salida.jsonl` una vez por modelo y
+  compara los resultados; guarda tu corpus real **fuera de git**. Para cambiar: `--modelo` en `analizar_correo.py`, o
+  `ANALISTA_CORREO_MODELO` (el temporizador, en `contrib/despliegue/README.es.md`).
+- Regla práctica: empieza con el de por defecto; prueba uno mayor si te sobra memoria, tus correos dependen más del texto
+  que de las cabeceras, o tienes GPU; usa `qwen2.5:3b` solo si vas justo de memoria (no medido aquí).
 
 ## Buzón (`buzon.py`)
 
