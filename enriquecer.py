@@ -497,6 +497,7 @@ def enriquecer(iocs, db, solo_infra=False, huella=""):
 
 
 def abrir_db(ruta):
+    Path(ruta).parent.mkdir(parents=True, exist_ok=True, mode=0o700)   # instalación nueva: aún no existe el directorio de estado
     db = sqlite3.connect(ruta)
     db.executescript(ESQUEMA_DB)
     return db

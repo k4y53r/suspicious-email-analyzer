@@ -1,6 +1,7 @@
 # Cambios
 
 ## Sin publicar
+- `--enriquecer` (y `pruebas/probar.sh`) fallaba en una instalación nueva con «unable to open database file»: `enriquecer.abrir_db` crea ahora el directorio de estado (700).
 - Licencia: AGPL-3.0-only (antes MIT en el borrador; nunca se publicó con MIT). Cabecera SPDX y copyright en los `.py` y `.sh`.
 - `contrib/despliegue/`: `crear-lxc.sh` (LXC en Proxmox) e `instalar.sh` (Debian 12/13) despliegan el analizador con Ollama, el modelo y un temporizador de systemd; solo hay que dar el `buzon.env`.
 - El modelo de Ollama se elige con `ANALISTA_CORREO_MODELO` (buzón y línea de comandos) o `--modelo` en `analizar_correo.py`; por defecto sigue siendo `qwen2.5:7b`.
