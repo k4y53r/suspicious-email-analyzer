@@ -2,7 +2,7 @@
 
 **English** · [Castellano](README.md)
 
-These come from the author's own setup (Graylog for network logs, Telegraf/InfluxDB/Grafana for metrics). They are examples: they depend on your infrastructure and are not part of the analyzer. None of this is needed to use it. The scripts in `contrib/despliegue/` (automatic deployment in an LXC/Debian) are the one thing here that is not an extra of the author's setup: see its README.
+These come from the author's own setup (Graylog for network logs, Telegraf/InfluxDB/Grafana for metrics). They are examples: they depend on your infrastructure and are not part of the analyzer. None of this is needed to use it. 
 
 ## Exporting IOCs to Graylog (`graylog/exportar_graylog.py`)
 

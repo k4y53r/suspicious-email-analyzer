@@ -28,8 +28,8 @@ muestran lo que harían.
 
 ```
 cp buzon.env.example buzon.env      # edítalo
-./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simula
-./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384 --ejecutar
+./despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simula
+./despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384 --ejecutar
 ```
 
 Sin `--env` todo se instala pero el temporizador queda sin activar: edita `~/.config/analista-correo/buzon.env` dentro del

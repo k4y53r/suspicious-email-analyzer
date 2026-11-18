@@ -28,8 +28,8 @@ Two scripts that leave the analyzer running without following the main README by
 
 ```
 cp buzon.env.example buzon.env      # edit it
-./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simulates
-./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384 --ejecutar
+./despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simulates
+./despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384 --ejecutar
 ```
 
 Without `--env` everything is installed but the timer stays disabled: edit `~/.config/analista-correo/buzon.env` inside

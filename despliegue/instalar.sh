@@ -48,7 +48,7 @@ done
 . /etc/os-release
 [[ "${ID:-}" == debian && "${VERSION_ID:-}" =~ ^(12|13)$ ]] || die "solo Debian 12 o 13 (hay ${ID:-?} ${VERSION_ID:-?})."
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-[[ -n "$FUENTE" || ! -f "$AQUI/../../analizar_correo.py" ]] || FUENTE="$(cd "$AQUI/../.." && pwd)"   # por defecto, este repositorio
+[[ -n "$FUENTE" || ! -f "$AQUI/../analizar_correo.py" ]] || FUENTE="$(cd "$AQUI/.." && pwd)"   # por defecto, este repositorio
 [[ -n "$FUENTE" ]] || { ayuda >&2; die "falta --fuente."; }
 [[ "$FUENTE" == https://* || -f "$FUENTE" || -d "$FUENTE" ]] || die "--fuente: una URL https://, un .tgz o un directorio existentes."
 [[ "$MODELO" =~ ^[A-Za-z0-9][A-Za-z0-9._:/-]*$ ]] || die "nombre de modelo no válido."

@@ -40,7 +40,7 @@ flowchart LR
     S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Grafana dashboard"]
 ```
 
-`contrib/despliegue/` builds the analyzer host (the container, Ollama, the model and the timer) in one command; everything right of the analyzer is optional.
+`despliegue/` builds the analyzer host (the container, Ollama, the model and the timer) in one command; everything right of the analyzer is optional.
 
 ## Quick start
 
@@ -63,7 +63,7 @@ chmod 600 ~/.config/analista-correo/buzon.env      # then edit it: server, user,
 ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # no IMAP/SMTP, no external services: prints the reply it would send (the local model is still needed)
 ```
 
-**Automatic deployment** in a Proxmox LXC (or any Debian): [`contrib/despliegue/`](contrib/despliegue/README.en.md) (one command; you only provide your
+**Automatic deployment** in a Proxmox LXC (or any Debian): [`despliegue/`](despliegue/README.en.md) (one command; you only provide your
 `buzon.env` and, if you want, another Ollama model with `--modelo`). It installs Ollama with its official script, without hash verification, and copies the code without pinning a version: review what you are about to run as root. To do it by hand, schedule `run.sh` from cron or a
 systemd timer (see [Mailbox mode](docs/mailbox-mode.en.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.en.md`](guia-reenvio.en.md). Optional extras
 (exporting IOCs to Graylog, metrics for Grafana) are in `contrib/`.
@@ -132,7 +132,7 @@ scale with your hardware, and a GPU changes them a lot.
 - This corpus is synthetic and made to exercise the rules, not to fool the model. Do not read it as a ranking: it is a
   starting point. To compare on your own mail, run `pruebas/probar.sh <model> out.jsonl` once per model and diff the
   results; keep your real corpus **out of git**. To switch: `--modelo` in `analizar_correo.py`, or
-  `ANALISTA_CORREO_MODELO` (see `contrib/despliegue/README.en.md` for the timer).
+  `ANALISTA_CORREO_MODELO` (see `despliegue/README.en.md` for the timer).
 - Rule of thumb: start with the default; try a larger one if you have memory to spare, mails where the text matters more
   than the headers, or a GPU; use `qwen2.5:3b` only when memory is tight and your use is research or evaluation (Qwen Research license, non-commercial; not measured here). The 7b and 14b are Apache-2.0.
 
@@ -173,4 +173,4 @@ The detail lives in `docs/` (each page has an English and a Castellano version):
 - [Mailbox mode](docs/mailbox-mode.en.md): `buzon.py`, configuration, the database, duplicates and useful SQL queries.
 - [Enrichment](docs/enrichment.en.md): reputation lookups, weights, OTX, abuse.ch, Tranco.
 - [Detection rules of 1.15](docs/detection-rules.en.md): the R1-R7 table and its limits.
-- [Automatic deployment](contrib/despliegue/README.en.md), [optional extras](contrib/README.en.md), [security policy](SECURITY.md) and [forwarding guide](guia-reenvio.en.md).
+- [Automatic deployment](despliegue/README.en.md), [optional extras](contrib/README.en.md), [security policy](SECURITY.md) and [forwarding guide](guia-reenvio.en.md).

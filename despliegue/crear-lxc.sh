@@ -42,7 +42,7 @@ done
 for b in pct pveam pvesm pvesh; do command -v "$b" >/dev/null || die "falta $b: ¿es un nodo Proxmox VE?"; done
 [[ -f "$AQUI/instalar.sh" ]] || die "falta instalar.sh junto a este script."
 if [[ -z "$FUENTE" ]]; then       # por defecto, este mismo repositorio (sin .git ni tu buzon.env)
-  REPO="$(cd "$AQUI/../.." && pwd)"
+  REPO="$(cd "$AQUI/.." && pwd)"
   [[ -f "$REPO/analizar_correo.py" ]] || die "no encuentro el repositorio junto a este script: usa --fuente."
   if (( EJECUTAR )); then
     TGZ="$(mktemp)"

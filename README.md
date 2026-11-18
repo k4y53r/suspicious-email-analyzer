@@ -38,7 +38,7 @@ flowchart LR
     S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Panel de Grafana"]
 ```
 
-`contrib/despliegue/` monta el equipo del analizador (contenedor, Ollama, modelo y temporizador) con un comando; todo lo que queda a la derecha del analizador es opcional.
+`despliegue/` monta el equipo del analizador (contenedor, Ollama, modelo y temporizador) con un comando; todo lo que queda a la derecha del analizador es opcional.
 
 ## Inicio rápido
 
@@ -60,7 +60,7 @@ chmod 600 ~/.config/analista-correo/buzon.env      # y edítalo: servidor, usuar
 ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # sin IMAP/SMTP ni servicios externos: imprime la respuesta que enviaría (el modelo local sí hace falta)
 ```
 
-Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Instala Ollama con su script oficial, sin verificar hash, y copia el código sin fijar versión: revisa antes lo que vas a ejecutar como root. Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
+Despliegue automático en un LXC de Proxmox (o en un Debian): [`despliegue/`](despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Instala Ollama con su script oficial, sin verificar hash, y copia el código sin fijar versión: revisa antes lo que vas a ejecutar como root. Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
 [`guia-reenvio.md`](guia-reenvio.md). Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
 
 ## Privacidad y límites
@@ -123,7 +123,7 @@ tiempos escalan con tu equipo y una GPU los cambia mucho.
 - Este corpus es sintético y está hecho para ejercitar las reglas, no para engañar al modelo. No es un ranking: es un
   punto de partida. Para comparar con tu correo, pasa `pruebas/probar.sh <modelo> salida.jsonl` una vez por modelo y
   compara los resultados; guarda tu corpus real **fuera de git**. Para cambiar: `--modelo` en `analizar_correo.py`, o
-  `ANALISTA_CORREO_MODELO` (el temporizador, en `contrib/despliegue/README.md`).
+  `ANALISTA_CORREO_MODELO` (el temporizador, en `despliegue/README.md`).
 - Regla práctica: empieza con el de por defecto; prueba uno mayor si te sobra memoria, tus correos dependen más del texto
   que de las cabeceras, o tienes GPU; usa `qwen2.5:3b` solo si vas justo de memoria y tu uso es de investigación o evaluación (licencia Qwen Research, no comercial; no medido aquí). El 7b y el 14b son Apache-2.0.
 
@@ -166,4 +166,4 @@ El detalle está en `docs/` (cada página tiene versión en inglés y en castell
 - [Modo buzón](docs/mailbox-mode.md): `buzon.py`, configuración, la base de datos, duplicados y consultas SQL útiles.
 - [Enriquecimiento](docs/enrichment.md): consultas de reputación, pesos, OTX, abuse.ch, Tranco.
 - [Reglas de detección de la 1.15](docs/detection-rules.md): la tabla R1-R7 y sus límites.
-- [Despliegue automático](contrib/despliegue/README.md), [extras opcionales](contrib/README.md), [política de seguridad](SECURITY.md) y [guía de reenvío](guia-reenvio.md).
+- [Despliegue automático](despliegue/README.md), [extras opcionales](contrib/README.md), [política de seguridad](SECURITY.md) y [guía de reenvío](guia-reenvio.md).

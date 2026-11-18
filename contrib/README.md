@@ -3,7 +3,6 @@
 [English](README.en.md) · **Castellano**
 
 Salen del montaje del autor (Graylog para logs de red, Telegraf/InfluxDB/Grafana para métricas). Son ejemplos: dependen de tu infraestructura y no forman parte del analizador. Nada de esto hace falta para usarlo.
-Los scripts de `contrib/despliegue/` (despliegue automático en LXC/Debian) son lo único de aquí que no es un extra del montaje del autor: ver su README.
 
 ## Exportación de IOCs a Graylog (`graylog/exportar_graylog.py`)
 

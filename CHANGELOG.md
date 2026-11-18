@@ -4,7 +4,7 @@
 - Documentación: el detalle del README pasa a `docs/` (cómo funciona, modo buzón, enriquecimiento, reglas de detección); el castellano es la versión por defecto y el inglés la alternativa (`*.en.md`), también para `contrib/` y la guía de reenvío.
 - `--enriquecer` (y `pruebas/probar.sh`) fallaba en una instalación nueva con «unable to open database file»: `enriquecer.abrir_db` crea ahora el directorio de estado (700).
 - Licencia: AGPL-3.0-only (antes MIT en el borrador; nunca se publicó con MIT). Cabecera SPDX y copyright en los `.py` y `.sh`.
-- `contrib/despliegue/`: `crear-lxc.sh` (LXC en Proxmox) e `instalar.sh` (Debian 12/13) despliegan el analizador con Ollama, el modelo y un temporizador de systemd; solo hay que dar el `buzon.env`.
+- `despliegue/`: `crear-lxc.sh` (LXC en Proxmox) e `instalar.sh` (Debian 12/13) despliegan el analizador con Ollama, el modelo y un temporizador de systemd; solo hay que dar el `buzon.env`.
 - El modelo de Ollama se elige con `ANALISTA_CORREO_MODELO` (buzón y línea de comandos) o `--modelo` en `analizar_correo.py`; por defecto sigue siendo `qwen2.5:7b`.
 
 ## 1.15 (primera publicación)
