@@ -43,7 +43,7 @@ flowchart LR
 ## Inicio rápido
 
 Requisitos: Python 3.11+, [Ollama](https://ollama.com) con un modelo (`ollama pull qwen2.5:7b`; `qwen2.5:3b` si vas
-justo de memoria; con más capacidad, uno mayor con `ANALISTA_CORREO_MODELO=qwen2.5:14b` o `--modelo` en `analizar_correo.py`), `dig` (paquete `dnsutils`/`bind-utils`, para el rDNS del enriquecimiento) y, para `pruebas/probar.sh`,
+justo de memoria, aunque su licencia (Qwen Research) solo permite investigación o evaluación: el 7b y el 14b son Apache-2.0; con más capacidad, uno mayor con `ANALISTA_CORREO_MODELO=qwen2.5:14b` o `--modelo` en `analizar_correo.py`), `dig` (paquete `dnsutils`/`bind-utils`, para el rDNS del enriquecimiento) y, para `pruebas/probar.sh`,
 `jq`. Para el modo buzón, una cuenta de correo con IMAP y SMTP.
 
 ```
@@ -60,7 +60,7 @@ chmod 600 ~/.config/analista-correo/buzon.env      # y edítalo: servidor, usuar
 ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # sin IMAP/SMTP ni servicios externos: imprime la respuesta que enviaría (el modelo local sí hace falta)
 ```
 
-Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
+Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Instala Ollama con su script oficial, sin verificar hash, y copia el código sin fijar versión: revisa antes lo que vas a ejecutar como root. Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
 [`guia-reenvio.md`](guia-reenvio.md). Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
 
 ## Privacidad y límites
@@ -85,11 +85,11 @@ El enriquecimiento (opcional) usa servicios y listas públicas con sus propios t
 python3 analizar_correo.py correo.eml
 python3 analizar_correo.py --reenviado reenviado.eml
 python3 analizar_correo.py --sin-modelo correo.eml
-python3 analizar_correo.py --modelo qwen2.5:3b correo.eml
+python3 analizar_correo.py --modelo qwen2.5:14b correo.eml
 python3 analizar_correo.py --enriquecer correo.eml      # listas públicas, abuse.ch y RDAP (y OTX si lo configuras)
 ```
 
-Sin dependencias externas. Con el 7B en CPU tarda unos 15-55 s por correo con el modelo cargado y 40-75 s en frío (medido en CPU, sin GPU).
+Sin dependencias de Python (basta la biblioteca estándar); además hacen falta `dig`, `git` y Ollama. Con el 7B en CPU tarda unos 15-55 s por correo con el modelo cargado y 40-75 s en frío (aprox., medido en el equipo del autor: CPU sin GPU).
 
 `pruebas/probar_reglas.py` (sin modelo ni red, segundos) comprueba frases de inyección, estilos ocultos y visibles y
 HTML con etiquetas sin cerrar, tipos reales y adjuntos ZIP; pásalo tras tocar `INYECCION`, `CSS_OCULTO`, `Texto`,
@@ -125,7 +125,7 @@ tiempos escalan con tu equipo y una GPU los cambia mucho.
   compara los resultados; guarda tu corpus real **fuera de git**. Para cambiar: `--modelo` en `analizar_correo.py`, o
   `ANALISTA_CORREO_MODELO` (el temporizador, en `contrib/despliegue/README.md`).
 - Regla práctica: empieza con el de por defecto; prueba uno mayor si te sobra memoria, tus correos dependen más del texto
-  que de las cabeceras, o tienes GPU; usa `qwen2.5:3b` solo si vas justo de memoria (no medido aquí).
+  que de las cabeceras, o tienes GPU; usa `qwen2.5:3b` solo si vas justo de memoria y tu uso es de investigación o evaluación (licencia Qwen Research, no comercial; no medido aquí). El 7b y el 14b son Apache-2.0.
 
 ## Qué hacer con la salida
 

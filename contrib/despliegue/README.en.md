@@ -19,7 +19,7 @@ Two scripts that leave the analyzer running without following the main README by
 
 | Option | Default | What for |
 |---|---|---|
-| `--modelo` | `qwen2.5:7b` | Ollama model. With more memory or a GPU, a larger one (e.g. `qwen2.5:14b`; see sizes at [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` if memory is tight. |
+| `--modelo` | `qwen2.5:7b` | Ollama model. With more memory or a GPU, a larger one (e.g. `qwen2.5:14b`; see sizes at [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` if memory is tight (Qwen Research license: research or evaluation only; the 7b and 14b are Apache-2.0). |
 | `--memoria` / `--nucleos` / `--disco` | 8192 MiB / 4 / 24 GB | Raise the memory with a larger model: the model must fit in RAM next to the system. |
 | `--vmid`, `--nombre` | next free id, `analista-correo` | Container id and name. |
 | `--almacen`, `--plantillas`, `--puente` | `local-lvm`, `local`, `vmbr0` | Storage and network of your Proxmox. |
@@ -45,8 +45,8 @@ new model.
 
 ## Time and what it touches
 
-About 18 minutes the first time with 4 vCPU and no GPU (Ollama and the model ~9 min; tests and the first analysis with the
-cold model the rest); `instalar.sh --sin-prueba` skips the last part. Each mail takes 1-2 minutes on CPU only. Inside the
+About 18 minutes the first time (approx.; measured on a Xeon E5-2620 v1 with 4 vCPU and no GPU: Ollama and the model ~9 min; tests and the first analysis with the
+cold model the rest); `instalar.sh --sin-prueba` skips the last part. Each mail takes 1-2 minutes on CPU only (approx.). Inside the
 container it touches: Debian packages, the `analista` user, Ollama (installed with its official script,
 `https://ollama.com/install.sh`, without hash verification), the code, `buzon.env` and the two systemd units. To undo it:
 `pct stop <id>; pct destroy <id> --purge`. If it fails with the container already created, the script says so. Tested on

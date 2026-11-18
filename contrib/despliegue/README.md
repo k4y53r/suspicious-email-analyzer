@@ -19,7 +19,7 @@ muestran lo que harían.
 
 | Opción | Por defecto | Para qué |
 |---|---|---|
-| `--modelo` | `qwen2.5:7b` | Modelo de Ollama. Con más memoria o GPU, uno mayor (p. ej. `qwen2.5:14b`; mira tamaños en [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` si vas justo. |
+| `--modelo` | `qwen2.5:7b` | Modelo de Ollama. Con más memoria o GPU, uno mayor (p. ej. `qwen2.5:14b`; mira tamaños en [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` si vas justo (licencia Qwen Research: solo investigación o evaluación; el 7b y el 14b son Apache-2.0). |
 | `--memoria` / `--nucleos` / `--disco` | 8192 MiB / 4 / 24 GB | Sube la memoria con un modelo mayor: el modelo cabe en RAM además del sistema. |
 | `--vmid`, `--nombre` | siguiente libre, `analista-correo` | Identificador y nombre del CT. |
 | `--almacen`, `--plantillas`, `--puente` | `local-lvm`, `local`, `vmbr0` | Almacenes y red de tu Proxmox. |
@@ -43,8 +43,8 @@ temporizador la lleva en `/etc/systemd/system/analista-correo.service`: cambia e
 
 ## Qué tarda y qué toca
 
-Unos 18 minutos la primera vez con 4 vCPU y sin GPU (Ollama y el modelo ~9 min, pruebas y primer análisis con el modelo en
-frío el resto); `instalar.sh --sin-prueba` se salta la última parte. Cada correo tarda 1-2 minutos solo con CPU. Dentro del
+Unos 18 minutos la primera vez (aprox.; medido en un Xeon E5-2620 v1 con 4 vCPU y sin GPU: Ollama y el modelo ~9 min, pruebas y primer análisis con el modelo en
+frío el resto); `instalar.sh --sin-prueba` se salta la última parte. Cada correo tarda 1-2 minutos solo con CPU (aprox.). Dentro del
 CT toca: paquetes de Debian, el usuario `analista`, Ollama (se instala con su script oficial, `https://ollama.com/install.sh`,
 sin verificar hash), el código, el `buzon.env` y las dos unidades systemd. Para deshacerlo: `pct stop <id>; pct destroy <id> --purge`.
 Si falla con el CT creado, el script lo dice. Probado en Proxmox VE 9 con Debian 13.

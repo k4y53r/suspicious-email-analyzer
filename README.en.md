@@ -45,7 +45,7 @@ flowchart LR
 ## Quick start
 
 Requirements: Python 3.11+, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`; `qwen2.5:3b` if memory
-is tight; with more capacity, a larger one via `ANALISTA_CORREO_MODELO=qwen2.5:14b` or `--modelo` in `analizar_correo.py`),
+is tight, although its license (Qwen Research) only allows research or evaluation: the 7b and 14b are Apache-2.0; with more capacity, a larger one via `ANALISTA_CORREO_MODELO=qwen2.5:14b` or `--modelo` in `analizar_correo.py`),
 `dig` (package `dnsutils`/`bind-utils`, for the rDNS lookups of the enrichment) and, for `pruebas/probar.sh`, `jq`. For
 mailbox mode, a mail account with IMAP and SMTP.
 
@@ -64,7 +64,7 @@ ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legit
 ```
 
 **Automatic deployment** in a Proxmox LXC (or any Debian): [`contrib/despliegue/`](contrib/despliegue/README.en.md) (one command; you only provide your
-`buzon.env` and, if you want, another Ollama model with `--modelo`). To do it by hand, schedule `run.sh` from cron or a
+`buzon.env` and, if you want, another Ollama model with `--modelo`). It installs Ollama with its official script, without hash verification, and copies the code without pinning a version: review what you are about to run as root. To do it by hand, schedule `run.sh` from cron or a
 systemd timer (see [Mailbox mode](docs/mailbox-mode.en.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.en.md`](guia-reenvio.en.md). Optional extras
 (exporting IOCs to Graylog, metrics for Grafana) are in `contrib/`.
 
@@ -94,12 +94,12 @@ each RIR/registry) and, if you configure it, AlienVault OTX.
 python3 analizar_correo.py correo.eml
 python3 analizar_correo.py --reenviado reenviado.eml
 python3 analizar_correo.py --sin-modelo correo.eml
-python3 analizar_correo.py --modelo qwen2.5:3b correo.eml
+python3 analizar_correo.py --modelo qwen2.5:14b correo.eml
 python3 analizar_correo.py --enriquecer correo.eml      # public lists, abuse.ch and RDAP (and OTX if configured)
 ```
 
-No external dependencies. With the 7B model on CPU it takes about 15-55 s per mail with the model loaded and 40-75 s cold
-(measured on CPU, no GPU).
+No Python dependencies (the standard library is enough); you also need `dig`, `git` and Ollama. With the 7B model on CPU it takes about 15-55 s per mail with the model loaded and 40-75 s cold
+(approx., measured on the author's machine: CPU, no GPU).
 
 `pruebas/probar_reglas.py` (no model, no network, seconds) checks injection phrases, hidden and visible styles, HTML with
 unclosed tags, real types and ZIP attachments; run it after touching `INYECCION`, `CSS_OCULTO`, `Texto`, `MAGIA`,
@@ -134,7 +134,7 @@ scale with your hardware, and a GPU changes them a lot.
   results; keep your real corpus **out of git**. To switch: `--modelo` in `analizar_correo.py`, or
   `ANALISTA_CORREO_MODELO` (see `contrib/despliegue/README.en.md` for the timer).
 - Rule of thumb: start with the default; try a larger one if you have memory to spare, mails where the text matters more
-  than the headers, or a GPU; use `qwen2.5:3b` only when memory is tight (not measured here).
+  than the headers, or a GPU; use `qwen2.5:3b` only when memory is tight and your use is research or evaluation (Qwen Research license, non-commercial; not measured here). The 7b and 14b are Apache-2.0.
 
 ## Using the output
 
