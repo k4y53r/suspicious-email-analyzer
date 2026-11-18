@@ -1,5 +1,7 @@
 # Reenvío automático del spam al analista desde Thunderbird (o Gmail)
 
+[English](guia-reenvio.en.md) · **Castellano**
+
 Guía para que Thunderbird reenvíe **como adjunto** al buzón del analista cada correo nuevo que su filtro adaptativo
 clasifica como correo basura. Como adjunto llegan las cabeceras originales (SPF, DKIM, DMARC, IP de origen) y el
 analista trabaja en modo `adjunto_rfc822`, el más completo; reenviado en el cuerpo pierde todo eso.

@@ -61,7 +61,7 @@ ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legit
 ```
 
 Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
-`guia-reenvio.md`. Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
+[`guia-reenvio.md`](guia-reenvio.md). Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
 
 ## Privacidad y límites
 

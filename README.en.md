@@ -65,7 +65,7 @@ ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legit
 
 **Automatic deployment** in a Proxmox LXC (or any Debian): [`contrib/despliegue/`](contrib/despliegue/README.en.md) (one command; you only provide your
 `buzon.env` and, if you want, another Ollama model with `--modelo`). To do it by hand, schedule `run.sh` from cron or a
-systemd timer (see [Mailbox mode](docs/mailbox-mode.en.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.md`](guia-reenvio.md) (Spanish). Optional extras
+systemd timer (see [Mailbox mode](docs/mailbox-mode.en.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.en.md`](guia-reenvio.en.md). Optional extras
 (exporting IOCs to Graylog, metrics for Grafana) are in `contrib/`.
 
 ## Privacy and limits
@@ -173,4 +173,4 @@ The detail lives in `docs/` (each page has an English and a Castellano version):
 - [Mailbox mode](docs/mailbox-mode.en.md): `buzon.py`, configuration, the database, duplicates and useful SQL queries.
 - [Enrichment](docs/enrichment.en.md): reputation lookups, weights, OTX, abuse.ch, Tranco.
 - [Detection rules of 1.15](docs/detection-rules.en.md): the R1-R7 table and its limits.
-- [Automatic deployment](contrib/despliegue/README.en.md), [optional extras](contrib/README.en.md), [security policy](SECURITY.md) and [forwarding guide](guia-reenvio.md) (Spanish).
+- [Automatic deployment](contrib/despliegue/README.en.md), [optional extras](contrib/README.en.md), [security policy](SECURITY.md) and [forwarding guide](guia-reenvio.en.md).

@@ -85,5 +85,5 @@
 - **Normal forward**: the original headers are lost. With a "Forwarded message" block, From and subject are taken from
   there (`reenvio_en_linea`). Without it (`--reenviado`, or always from `buzon.py`) only body, links and the Reply-To,
   which Gmail keeps, are analysed (`reenvio_sin_cabeceras`).
-- **Automatic from Thunderbird** (mail it files as junk, forwarded as attachment by a filter): [`guia-reenvio.md`](../guia-reenvio.md) (Spanish),
+- **Automatic from Thunderbird** (mail it files as junk, forwarded as attachment by a filter): [`guia-reenvio.en.md`](../guia-reenvio.en.md),
   with alternatives (Apps Script in Gmail, manual forwarding, add-ons).
