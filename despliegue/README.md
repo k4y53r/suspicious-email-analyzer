@@ -48,3 +48,7 @@ frío el resto); `instalar.sh --sin-prueba` se salta la última parte. Cada corr
 CT toca: paquetes de Debian, el usuario `analista`, Ollama (se instala con su script oficial, `https://ollama.com/install.sh`,
 sin verificar hash), el código, el `buzon.env` y las dos unidades systemd. Para deshacerlo: `pct stop <id>; pct destroy <id> --purge`.
 Si falla con el CT creado, el script lo dice. Probado en Proxmox VE 9 con Debian 13.
+
+## Actualizar el código
+
+El instalador no sobrescribe una instalación completa. Para actualizar, copia los ficheros nuevos sobre `/home/analista/analista-correo` (la configuración, `~/.config/analista-correo/`, y los datos, `~/.local/state/analista-correo/`, están fuera de esa carpeta y no se tocan) o repite el despliegue en un CT nuevo. Si una instalación quedó a medias, el instalador lo dice: borra la carpeta y repite.

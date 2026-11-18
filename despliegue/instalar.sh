@@ -76,21 +76,31 @@ if (( EJECUTAR )); then
 else info "simularía: ollama pull $MODELO (hasta 5 intentos)"; fi
 
 info "código en $DESTINO"
-if [[ ! -d "$DESTINO" ]]; then
+if [[ -e "$DESTINO" ]]; then
+  [[ -f "$DESTINO/analizar_correo.py" && -f "$DESTINO/buzon.py" ]] || die "$DESTINO existe pero está incompleto (instalación a medias): bórralo (rm -rf $DESTINO) y repite."
+  info "ya existe y está completo: no se toca (para actualizarlo, ver el README de despliegue)"
+else
+  NUEVO="$HOME_U/.analista-correo.nuevo"   # se prepara aparte y se mueve entero: nunca queda una copia a medias en $DESTINO
+  hacer rm -rf "$NUEVO"
   if [[ "$FUENTE" == https://* ]]; then
-    hacer runuser -u "$USUARIO" -- git clone --quiet -- "$FUENTE" "$DESTINO"
+    hacer runuser -u "$USUARIO" -- git clone --quiet -- "$FUENTE" "$NUEVO"
   elif [[ -d "$FUENTE" ]]; then
     if (( EJECUTAR )); then
-      runuser -u "$USUARIO" -- mkdir -m 755 "$DESTINO"
-      tar -C "$FUENTE" --exclude=./.git --exclude='*.env' --exclude='*.env.[!e]*' --exclude=__pycache__ --exclude=./.venv -cf - . | runuser -u "$USUARIO" -- tar xf - -C "$DESTINO" --no-same-owner
-    else info "simularía: copiar $FUENTE en $DESTINO"; fi
+      runuser -u "$USUARIO" -- mkdir -m 755 "$NUEVO"
+      tar -C "$FUENTE" --exclude=./.git --exclude='*.env' --exclude='*.env.[!e]*' --exclude='*.prev' --exclude='*.antes' \
+        --exclude=__pycache__ --exclude=./.venv --exclude=./resultados -cf - . | runuser -u "$USUARIO" -- tar xf - -C "$NUEVO" --no-same-owner
+    else info "simularía: copiar $FUENTE en $NUEVO"; fi
   else
     if (( EJECUTAR )); then
-      runuser -u "$USUARIO" -- tar xzf - -C "$HOME_U" --no-same-owner < "$FUENTE"
-      [[ -d "$DESTINO" ]] || die "el .tgz no contiene analista-correo/."
-    else info "simularía: extraer $FUENTE en $HOME_U"; fi
+      runuser -u "$USUARIO" -- mkdir -m 755 "$NUEVO"
+      runuser -u "$USUARIO" -- tar xzf - -C "$NUEVO" --no-same-owner --strip-components=1 < "$FUENTE"
+    else info "simularía: extraer $FUENTE en $NUEVO"; fi
   fi
-else info "ya existe, no se toca"; fi
+  if (( EJECUTAR )); then
+    [[ -f "$NUEVO/analizar_correo.py" && -f "$NUEVO/buzon.py" ]] || die "la fuente no contiene el analizador (¿es el repositorio o un .tgz con una carpeta raíz?)."
+    mv -- "$NUEVO" "$DESTINO"
+  else info "simularía: mover $NUEVO a $DESTINO"; fi
+fi
 
 info "configuración del buzón"
 if [[ -n "$ENV_ORIGEN" ]]; then

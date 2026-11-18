@@ -51,3 +51,7 @@ container it touches: Debian packages, the `analista` user, Ollama (installed wi
 `https://ollama.com/install.sh`, without hash verification), the code, `buzon.env` and the two systemd units. To undo it:
 `pct stop <id>; pct destroy <id> --purge`. If it fails with the container already created, the script says so. Tested on
 Proxmox VE 9 with Debian 13.
+
+## Updating the code
+
+The installer does not overwrite a complete installation. To update, copy the new files over `/home/analista/analista-correo` (the configuration, `~/.config/analista-correo/`, and the data, `~/.local/state/analista-correo/`, live outside that folder and are not touched) or repeat the deployment in a new container. If an installation was left half-done, the installer says so: delete the folder and repeat.

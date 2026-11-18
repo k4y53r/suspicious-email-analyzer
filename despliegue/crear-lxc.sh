@@ -46,7 +46,13 @@ if [[ -z "$FUENTE" ]]; then       # por defecto, este mismo repositorio (sin .gi
   [[ -f "$REPO/analizar_correo.py" ]] || die "no encuentro el repositorio junto a este script: usa --fuente."
   if (( EJECUTAR )); then
     TGZ="$(mktemp)"
-    tar czf "$TGZ" --exclude=./.git --exclude='*.env' --exclude='*.env.[!e]*' --exclude=__pycache__ --exclude=./.venv --transform 's,^\.,analista-correo,' -C "$REPO" .
+    # Con git, solo lo versionado; sin git o sin acceso al repositorio, todo salvo lo que .gitignore suele dejar fuera.
+    if command -v git >/dev/null && git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+       && tar czf "$TGZ" --null --transform 's,^,analista-correo/,' -C "$REPO" -T <(git -C "$REPO" ls-files -z) 2>/dev/null; then :
+    else
+      tar czf "$TGZ" --exclude=./.git --exclude='*.env' --exclude='*.env.[!e]*' --exclude='*.prev' --exclude='*.antes' \
+        --exclude=__pycache__ --exclude=./.venv --exclude=./resultados --transform 's,^\.,analista-correo,' -C "$REPO" .
+    fi
     FUENTE="$TGZ"
   else FUENTE="(este repositorio, empaquetado)"; fi
 fi
@@ -94,6 +100,7 @@ if [[ -n "$ENV_ORIGEN" ]]; then hacer pct push "$VMID" "$ENV_ORIGEN" /root/buzon
 info "instalación dentro del CT (tarda unos 15 minutos: Ollama y el modelo)"
 if (( EJECUTAR )); then
   pct exec "$VMID" -- /root/instalar.sh "${ARGS[@]}"
+  pct exec "$VMID" -- rm -f /root/instalar.sh /root/analista-correo.tgz
   info "CT $VMID listo: $(pct exec "$VMID" -- hostname -I 2>/dev/null | cut -d' ' -f1)"
 else info "simularía: pct exec $VMID -- /root/instalar.sh ${ARGS[*]}"; fi
 exit 0
