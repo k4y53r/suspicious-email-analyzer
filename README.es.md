@@ -1,4 +1,4 @@
-# analista-correo
+# suspicious-email-analyzer
 
 [English](README.md) · **Castellano**
 
@@ -47,7 +47,7 @@ justo de memoria; con más capacidad, uno mayor con `ANALISTA_CORREO_MODELO=qwen
 `jq`. Para el modo buzón, una cuenta de correo con IMAP y SMTP.
 
 ```
-git clone <este repositorio> && cd <directorio del repositorio>
+git clone https://github.com/k4y53r/suspicious-email-analyzer.git && cd suspicious-email-analyzer
 python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # un análisis, sin buzón
 python3 -I pruebas/probar_reglas.py                                    # pruebas sin modelo ni red
 ```
@@ -60,7 +60,7 @@ chmod 600 ~/.config/analista-correo/buzon.env      # y edítalo: servidor, usuar
 ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # sin IMAP/SMTP ni servicios externos: imprime la respuesta que enviaría (el modelo local sí hace falta)
 ```
 
-Despliegue automático en un LXC de Proxmox (o en un Debian): `contrib/despliegue/` (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.es.md)). Para reenviar desde Thunderbird o Gmail,
+Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.es.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.es.md)). Para reenviar desde Thunderbird o Gmail,
 `guia-reenvio.md`. Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
 
 ## Privacidad y límites

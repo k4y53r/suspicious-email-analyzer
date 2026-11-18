@@ -1,4 +1,4 @@
-# analista-correo
+# suspicious-email-analyzer
 
 **English** · [Castellano](README.es.md)
 
@@ -8,7 +8,7 @@ attachments inspected from the inside without executing anything) plus the opini
 [Ollama](https://ollama.com) (`qwen2.5:7b` by default). Nothing leaves your machine except the mail itself, which goes through your
 provider, and the enrichment lookups to public reputation services, which you can turn off.
 
-The core is plain Python (standard library only, no third-party packages). The program's messages, rule names and JSON
+The program is called `analista-correo` in the code, the file names and the settings. The core is plain Python (standard library only, no third-party packages). The program's messages, rule names and JSON
 fields are in Spanish; this README is the overview and the detailed documentation is in [`docs/`](#documentation).
 
 ## How the pieces fit
@@ -50,7 +50,7 @@ is tight; with more capacity, a larger one via `ANALISTA_CORREO_MODELO=qwen2.5:1
 mailbox mode, a mail account with IMAP and SMTP.
 
 ```
-git clone <this repository> && cd <repository directory>
+git clone https://github.com/k4y53r/suspicious-email-analyzer.git && cd suspicious-email-analyzer
 python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # one analysis, no mailbox
 python3 -I pruebas/probar_reglas.py                                    # tests, no model and no network
 ```
@@ -63,9 +63,9 @@ chmod 600 ~/.config/analista-correo/buzon.env      # then edit it: server, user,
 ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # no IMAP/SMTP, no external services: prints the reply it would send (the local model is still needed)
 ```
 
-**Automatic deployment** in a Proxmox LXC (or any Debian): `contrib/despliegue/` (one command; you only provide your
+**Automatic deployment** in a Proxmox LXC (or any Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (one command; you only provide your
 `buzon.env` and, if you want, another Ollama model with `--modelo`). To do it by hand, schedule `run.sh` from cron or a
-systemd timer (see [Mailbox mode](docs/mailbox-mode.md)). To forward from Thunderbird or Gmail, see `guia-reenvio.md` (Spanish). Optional extras
+systemd timer (see [Mailbox mode](docs/mailbox-mode.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.md`](guia-reenvio.md) (Spanish). Optional extras
 (exporting IOCs to Graylog, metrics for Grafana) are in `contrib/`.
 
 ## Privacy and limits
