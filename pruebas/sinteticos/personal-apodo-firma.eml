@@ -1,0 +1,21 @@
+From: Roberto <roberto@correo-amigo.example>
+To: analista@example.org
+Subject: Esta tarde
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=correo-amigo.example; dkim=pass header.d=correo-amigo.example;
+ dmarc=pass
+Received: from mail.correo-amigo.example (mail.correo-amigo.example
+ [192.0.2.43]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <personal-apodo-firma.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hola,
+
+=C2=BFQuedamos esta tarde para el caf=C3=A9 de siempre? Dime la hora que te v=
+iene bien.
+
+Saludos,
+Rober

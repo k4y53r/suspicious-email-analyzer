@@ -1,0 +1,32 @@
+From: Contabilidad <admin@suministros-ejemplo.example>
+To: analista@example.org
+Subject: Factura septiembre 2026
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=suministros-ejemplo.example; dkim=pass
+ header.d=suministros-ejemplo.example; dmarc=pass
+Message-ID: <adjunto-pe-disfrazado.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-adjunto-pe-disfrazado.eml"
+
+--sintetico-adjunto-pe-disfrazado.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Buenos días,
+
+Adjunto la factura de septiembre. Ábrala hoy para evitar el recargo.
+
+Contabilidad
+
+--sintetico-adjunto-pe-disfrazado.eml
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Factura_septiembre.pdf"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAQAAAAFBFAABmaWNoZXJvIGRlIHBydWViYSwgbm8gZWplY3V0YWJsZQAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAA
+
+--sintetico-adjunto-pe-disfrazado.eml--

@@ -1,0 +1,24 @@
+# fichero	modo	esperado (legitimo|spam|sospechoso|malicioso, varios con |; "dudoso" = cualquiera)
+pruebas/sinteticos/malware-adjunto.eml	original	malicioso
+pruebas/sinteticos/inyeccion-banco.eml	original	malicioso
+pruebas/sinteticos/inyeccion-oculta.eml	original	malicioso
+pruebas/sinteticos/legitimo-trabajo.eml	original	legitimo
+pruebas/sinteticos/adjunto-pe-disfrazado.eml	original	malicioso
+pruebas/sinteticos/adjunto-zip-lnk.eml	original	malicioso
+pruebas/sinteticos/adjunto-docx-macros.eml	original	malicioso
+pruebas/sinteticos/adjunto-zip-cifrado.eml	original	sospechoso|malicioso
+pruebas/sinteticos/legitimo-adjuntos.eml	original	legitimo
+pruebas/sinteticos/adjunto-xls-xlm.eml	original	malicioso
+pruebas/sinteticos/adjunto-doc-vba.eml	original	malicioso
+pruebas/sinteticos/adjunto-docx-cifrado.eml	original	sospechoso|malicioso
+pruebas/sinteticos/legitimo-office-antiguo.eml	original	legitimo
+pruebas/sinteticos/cebo-intimo-nl.eml	original	sospechoso|malicioso
+pruebas/sinteticos/cebo-intimo-es.eml	original	sospechoso|malicioso
+pruebas/sinteticos/cebo-intimo-sin-enlace.eml	original	legitimo|spam|sospechoso
+pruebas/sinteticos/boletin-uuid-baja.eml	original	legitimo|spam
+pruebas/sinteticos/notificacion-noreply-uuid.eml	original	legitimo|spam
+pruebas/sinteticos/personal-apodo-firma.eml	original	legitimo|spam
+pruebas/sinteticos/personal-idioma-ajeno.eml	original	legitimo|spam
+pruebas/sinteticos/codigo-llaves.eml	original	legitimo|spam
+pruebas/sinteticos/fotos-amiga.eml	original	legitimo|spam
+pruebas/sinteticos/postmaster-it.eml	original	legitimo|spam

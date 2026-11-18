@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.prev
+*.antes
+*.env
+!buzon.env.example
+resultados/
+.venv/

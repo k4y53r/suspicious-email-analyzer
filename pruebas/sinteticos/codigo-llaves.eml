@@ -1,0 +1,27 @@
+From: Ana =?utf-8?q?L=C3=B3pez?= <ana@empresa-ejemplo.example>
+To: analista@example.org
+Subject: Ejemplo de =?utf-8?q?configuraci=C3=B3n?=
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=empresa-ejemplo.example; dkim=pass
+ header.d=empresa-ejemplo.example; dmarc=pass
+Received: from mail.empresa-ejemplo.example (mail.empresa-ejemplo.example
+ [192.0.2.44]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <codigo-llaves.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Hola,
+
+El ejemplo que comentamos:
+
+config = { x }
+{"nombre": "prueba", "valor": 1}
+a{color:red}
+function(){return 1}
+
+Cuando puedas lo revisas.
+
+Un saludo,
+Ana

@@ -1,0 +1,58 @@
+From: Ana =?utf-8?q?L=C3=B3pez?= <ana@empresa-ejemplo.example>
+To: analista@example.org
+Subject: Acta de la =?utf-8?q?reuni=C3=B3n?= del jueves
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=empresa-ejemplo.example; dkim=pass
+ header.d=empresa-ejemplo.example; dmarc=pass
+Message-ID: <legitimo-adjuntos.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-legitimo-adjuntos.eml"
+
+--sintetico-legitimo-adjuntos.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hola,
+
+Te paso el acta del jueves y el presupuesto que comentamos. M=C3=ADrala cuand=
+o puedas.
+
+Un saludo,
+Ana
+
+--sintetico-legitimo-adjuntos.eml
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Acta_jueves.docx"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAABIQV3HHBc8CAAAAAgAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbDxUeXBlcy8+
+UEsDBBQAAAAAAABIQV3dWoYNDQAAAA0AAAARAAAAd29yZC9kb2N1bWVudC54bWw8dzpkb2N1bWVu
+dC8+UEsDBBQAAAAAAABIQV2lvutbBAAAAAQAAAAVAAAAd29yZC9tZWRpYS9pbWFnZTEucG5niVBO
+R1BLAQIUAxQAAAAAAABIQV3HHBc8CAAAAAgAAAATAAAAAAAAAAAAAACAAQAAAABbQ29udGVudF9U
+eXBlc10ueG1sUEsBAhQDFAAAAAAAAEhBXd1ahg0NAAAADQAAABEAAAAAAAAAAAAAAIABOQAAAHdv
+cmQvZG9jdW1lbnQueG1sUEsBAhQDFAAAAAAAAEhBXaW+61sEAAAABAAAABUAAAAAAAAAAAAAAIAB
+dQAAAHdvcmQvbWVkaWEvaW1hZ2UxLnBuZ1BLBQYAAAAAAwADAMMAAACsAAAAAAA=
+
+--sintetico-legitimo-adjuntos.eml
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Presupuesto.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjQKJSBwcnVlYmEKJSVFT0YK
+
+--sintetico-legitimo-adjuntos.eml
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Fotos_obra.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAABIQV1lTTolAwAAAAMAAAAOAAAAb2JyYS9mb3RvMS5qcGf/2P9QSwMEFAAAAAAA
+AEhBXWVNOiUDAAAAAwAAAA4AAABvYnJhL2ZvdG8yLmpwZ//Y/1BLAQIUAxQAAAAAAABIQV1lTTol
+AwAAAAMAAAAOAAAAAAAAAAAAAACAAQAAAABvYnJhL2ZvdG8xLmpwZ1BLAQIUAxQAAAAAAABIQV1l
+TTolAwAAAAMAAAAOAAAAAAAAAAAAAACAAS8AAABvYnJhL2ZvdG8yLmpwZ1BLBQYAAAAAAgACAHgA
+AABeAAAAAAA=
+
+--sintetico-legitimo-adjuntos.eml--

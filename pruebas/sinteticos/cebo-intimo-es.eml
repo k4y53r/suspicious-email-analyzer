@@ -1,0 +1,20 @@
+From: =?utf-8?q?Luc=C3=ADa?= Prado <noreply@dominio-b.example>
+To: analista@example.org
+Subject: Las fotos que te =?utf-8?q?promet=C3=AD?=
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=dominio-b.example; dkim=pass header.d=dominio-b.example;
+ dmarc=pass
+Received: from mail.dominio-b.example (mail.dominio-b.example [192.0.2.27]) by
+ mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <cebo-intimo-es.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+Hola Cliente7731, soy Marta. Aquí tienes las fotos de Paula que te comenté.
+Esto queda entre nosotros, nadie más debe verlas.
+https://dominio-b.example/ver?x=1
+
+Un abrazo,
+Marta

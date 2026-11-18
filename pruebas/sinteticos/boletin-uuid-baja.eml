@@ -1,0 +1,36 @@
+From: Tienda Ejemplo <boletin@tienda-ejemplo.example>
+To: analista@example.org
+Subject: Novedades de noviembre
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=tienda-ejemplo.example; dkim=pass
+ header.d=tienda-ejemplo.example; dmarc=pass
+Received: from mail.tienda-ejemplo.example (mail.tienda-ejemplo.example
+ [192.0.2.41]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <boletin-uuid-baja.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+List-Unsubscribe:
+ <https://tienda-ejemplo.example/baja?r=5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="sintetico-boletin-uuid-baja.eml"
+
+--sintetico-boletin-uuid-baja.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hola, estas son las novedades del mes.
+https://tienda-ejemplo.example/novedades?r=3D5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b=
+6c37
+Para darte de baja pulsa aqu=C3=AD.
+
+--sintetico-boletin-uuid-baja.eml
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hola, estas son las novedades del mes.</p><p><a href=3D"https:=
+//tienda-ejemplo.example/novedades?r=3D5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37">=
+Ver novedades</a></p><p><a href=3D"https://tienda-ejemplo.example/baja?r=3D5d=
+3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37">Darse de baja</a></p></body></html>
+
+--sintetico-boletin-uuid-baja.eml--

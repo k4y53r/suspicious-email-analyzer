@@ -1,0 +1,20 @@
+From: Servicio de Estado <noreply@estado-ejemplo.example>
+To: analista@example.org
+Subject: Tu pedido ha cambiado de estado
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=estado-ejemplo.example; dkim=pass
+ header.d=estado-ejemplo.example; dmarc=pass
+Received: from mail.estado-ejemplo.example (mail.estado-ejemplo.example
+ [192.0.2.42]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <notificacion-noreply-uuid.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+List-Unsubscribe: =?utf-8?q?=3Chttps=3A//estado-ejemplo=2Eexample/avisos=3Fu?=
+ =?utf-8?q?=3D5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37=3E?=
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Tu pedido est=C3=A1 en reparto.
+https://estado-ejemplo.example/pedido/5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37
+Gestiona tus avisos: https://estado-ejemplo.example/avisos?u=3D5d3c9a1e-7b24-=
+4f60-9c1d-0a8e2f4b6c37

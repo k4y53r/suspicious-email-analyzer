@@ -1,0 +1,43 @@
+From: "Mira Jansen" <postmaster@dominio-a.example>
+To: analista@example.org
+Subject: Fwd: Foto's
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=dominio-a.example; dkim=pass header.d=dominio-a.example;
+ dmarc=pass
+Received: from mail.dominio-a.example (mail.dominio-a.example [192.0.2.15]) by
+ mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <cebo-intimo-nl.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Reply-To: postmaster@dominio-a.example
+Return-Path: <postmaster@dominio-a.example>
+List-Unsubscribe:
+ <https://dominio-a.example/baja?id=5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="sintetico-cebo-intimo-nl.eml"
+
+--sintetico-cebo-intimo-nl.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hoi Gebruiker4821, met Lotte. Hier zijn de foto's van Anna waar ik het over h=
+ad.
+Dit blijft tussen ons, niemand anders mag ze zien.
+https://dominio-a.example/?id=3D5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37&u=3D1&t=
+=3D{tag}
+
+Groeten,
+Lotte
+
+--sintetico-cebo-intimo-nl.eml
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><head><style>@media only screen and (max-width:660px) { .estrecho { wid=
+th: 100%!important; } } .caja { color: #333; }</style></head><body><p>Hoi Geb=
+ruiker4821, met Lotte. Hier zijn de foto's van Anna waar ik het over had.</p>=
+<p>Dit blijft tussen ons, niemand anders mag ze zien.</p><p><a href=3D"https:=
+//dominio-a.example/?id=3D5d3c9a1e-7b24-4f60-9c1d-0a8e2f4b6c37&u=3D1&t=3D{tag=
+}">FOTO_001.JPG</a></p><p>Groeten,<br>Lotte</p></body></html>
+
+--sintetico-cebo-intimo-nl.eml--

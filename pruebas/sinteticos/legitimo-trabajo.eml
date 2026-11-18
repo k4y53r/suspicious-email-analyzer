@@ -1,0 +1,17 @@
+From: Ana =?utf-8?q?L=C3=B3pez?= <ana@empresa-ejemplo.example>
+To: analista@example.org
+Subject: =?utf-8?q?Reuni=C3=B3n?= del jueves
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=empresa-ejemplo.example; dkim=pass header.d=empresa-ejemplo.example;
+ dmarc=pass
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hola,
+
+=C2=BFTe viene bien mover la reuni=C3=B3n del jueves a las 11? He dejado el a=
+cta anterior en la carpeta compartida de siempre.
+
+Un saludo,
+Ana

@@ -1,0 +1,32 @@
+From: Carmen Soto <carmen@correo-amigo.example>
+To: analista@example.org
+Subject: Las fotos de la boda
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=correo-amigo.example; dkim=pass header.d=correo-amigo.example;
+ dmarc=pass
+Received: from mail.correo-amigo.example (mail.correo-amigo.example
+ [192.0.2.43]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <fotos-amiga.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-fotos-amiga.eml"
+
+--sintetico-fotos-amiga.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hola, te mando las fotos de la boda. Por favor no se lo digas a nadie hasta q=
+ue se lo cuente yo.
+
+Un beso,
+Carmen
+
+--sintetico-fotos-amiga.eml
+Content-Type: image/jpeg
+Content-Transfer-Encoding: base64
+Content-Disposition: inline; filename="boda.jpg"
+MIME-Version: 1.0
+
+/9j/4DAwMDAwMDAwMDAwMDAwMDAwMDAw
+
+--sintetico-fotos-amiga.eml--

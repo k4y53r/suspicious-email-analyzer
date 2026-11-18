@@ -1,0 +1,33 @@
+From: RRHH <rrhh@asesoria-ejemplo.example>
+To: analista@example.org
+Subject: =?utf-8?q?N=C3=B3mina?= de octubre
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=asesoria-ejemplo.example; dkim=pass
+ header.d=asesoria-ejemplo.example; dmarc=pass
+Message-ID: <adjunto-docx-macros.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-adjunto-docx-macros.eml"
+
+--sintetico-adjunto-docx-macros.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Le enviamos su n=C3=B3mina. Si el documento no se ve bien, pulse =C2=ABHabili=
+tar contenido=C2=BB.
+
+--sintetico-adjunto-docx-macros.eml
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Nomina_octubre.docx"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAABIQV3HHBc8CAAAAAgAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbDxUeXBlcy8+
+UEsDBBQAAAAAAABIQV3dWoYNDQAAAA0AAAARAAAAd29yZC9kb2N1bWVudC54bWw8dzpkb2N1bWVu
+dC8+UEsDBBQAAAAAAABIQV1DHnFGBgAAAAYAAAATAAAAd29yZC92YmFQcm9qZWN0LmJpbnBydWVi
+YVBLAQIUAxQAAAAAAABIQV3HHBc8CAAAAAgAAAATAAAAAAAAAAAAAACAAQAAAABbQ29udGVudF9U
+eXBlc10ueG1sUEsBAhQDFAAAAAAAAEhBXd1ahg0NAAAADQAAABEAAAAAAAAAAAAAAIABOQAAAHdv
+cmQvZG9jdW1lbnQueG1sUEsBAhQDFAAAAAAAAEhBXUMecUYGAAAABgAAABMAAAAAAAAAAAAAAIAB
+dQAAAHdvcmQvdmJhUHJvamVjdC5iaW5QSwUGAAAAAAMAAwDBAAAArAAAAAAA
+
+--sintetico-adjunto-docx-macros.eml--

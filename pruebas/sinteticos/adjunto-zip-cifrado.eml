@@ -1,0 +1,28 @@
+From: =?utf-8?q?Notar=C3=ADa?= <avisos@notaria-ejemplo.example>
+To: analista@example.org
+Subject: =?utf-8?q?Documentaci=C3=B3n?= pendiente de firma
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=notaria-ejemplo.example; dkim=pass
+ header.d=notaria-ejemplo.example; dmarc=pass
+Message-ID: <adjunto-zip-cifrado.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-adjunto-zip-cifrado.eml"
+
+--sintetico-adjunto-zip-cifrado.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Adjuntamos la documentación pendiente. Contraseña del archivo: 4471
+
+--sintetico-adjunto-zip-cifrado.eml
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Documentacion.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAQAAAABIQV1eCHNQDwAAAA8AAAAaAAAARG9jdW1lbnRhY2lvbi9jb250cmF0by5wZGYl
+UERGLTEuNCBwcnVlYmFQSwECFAMUAAEAAAAASEFdXghzUA8AAAAPAAAAGgAAAAAAAAAAAAAAgAEA
+AAAARG9jdW1lbnRhY2lvbi9jb250cmF0by5wZGZQSwUGAAAAAAEAAQBIAAAARwAAAAAA
+
+--sintetico-adjunto-zip-cifrado.eml--

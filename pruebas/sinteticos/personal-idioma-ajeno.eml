@@ -1,0 +1,20 @@
+From: Femke de Vries <femke@correo-amigo.example>
+To: analista@example.org
+Subject: Tot zaterdag
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=correo-amigo.example; dkim=pass header.d=correo-amigo.example;
+ dmarc=pass
+Received: from mail.correo-amigo.example (mail.correo-amigo.example
+ [192.0.2.43]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <personal-idioma-ajeno.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hoi, ik hoop dat het goed met je gaat. We komen zaterdag langs voor een kopje=
+ koffie, als dat voor jullie ook past. Laat maar weten, dan nemen we iets lek=
+kers mee voor de kinderen.
+
+Groeten,
+Femke

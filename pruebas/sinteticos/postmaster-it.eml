@@ -1,0 +1,18 @@
+From: "Postmaster IT" <postmaster@empresa-ejemplo.example>
+To: analista@example.org
+Subject: Mantenimiento del servidor de correo
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=empresa-ejemplo.example; dkim=pass
+ header.d=empresa-ejemplo.example; dmarc=pass
+Received: from mail.empresa-ejemplo.example (mail.empresa-ejemplo.example
+ [192.0.2.44]) by mx.example.org; Sat, 10 Oct 2026 10:00:00 +0200
+Message-ID: <postmaster-it.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Esta noche habr=C3=A1 mantenimiento del servidor de correo entre las 02:00 y =
+las 03:00.
+
+Equipo de sistemas

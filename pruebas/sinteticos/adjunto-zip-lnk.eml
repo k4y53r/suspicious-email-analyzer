@@ -1,0 +1,29 @@
+From: Pedidos <pedidos@transportes-ejemplo.example>
+To: analista@example.org
+Subject: Pedido 4471 retenido en aduana
+Authentication-Results: mx.example.org; spf=pass
+ smtp.mailfrom=transportes-ejemplo.example; dkim=pass
+ header.d=transportes-ejemplo.example; dmarc=pass
+Message-ID: <adjunto-zip-lnk.eml@sintetico.invalid>
+Date: Sat, 10 Oct 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="sintetico-adjunto-zip-lnk.eml"
+
+--sintetico-adjunto-zip-lnk.eml
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Su pedido 4471 est=C3=A1 retenido. Descargue el documento adjunto y confirme =
+los datos de entrega.
+
+--sintetico-adjunto-zip-lnk.eml
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Pedido_4471.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAABIQV24ML+QCgAAAAoAAAAfAAAAUGVkaWRvXzQ0NzEvUGVkaWRvXzQ0NzEucGRm
+Lmxua0wAAABwcnVlYmFQSwECFAMUAAAAAAAASEFduDC/kAoAAAAKAAAAHwAAAAAAAAAAAAAAgAEA
+AAAAUGVkaWRvXzQ0NzEvUGVkaWRvXzQ0NzEucGRmLmxua1BLBQYAAAAAAQABAE0AAABHAAAAAAA=
+
+--sintetico-adjunto-zip-lnk.eml--
