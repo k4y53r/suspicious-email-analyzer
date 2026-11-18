@@ -21,6 +21,13 @@ Generates `~/.local/state/analista-correo/graylog/correo_iocs_ip.csv` and `corre
 python3 -I metricas.py --salida /tmp/metricas.lp
 ```
 
+**Ready-made dashboard.** `grafana-telegraf/dashboard.json` is the author's dashboard (11 panels: totals, new mails per day by verdict, risk per day, indicators by origin, forwards, model latency, SPF/DKIM/DMARC results and campaigns), exported to be importable:
+1. In Grafana: Dashboards → New → Import → upload `dashboard.json`.
+2. Pick your InfluxDB data source (it is asked as `DS_INFLUXDB`).
+3. Set the `host` variable to the `host` tag that Telegraf adds to the points (the machine name, or what you set in its config).
+4. The Flux queries read the bucket `home`: if yours has another name, replace it in the panels (Edit → query).
+It only shows counts (no subjects, senders or IOCs). Panel texts are in Spanish, like the program's output.
+
 ## OTX (`ANALISTA_CORREO_OTX_CMD`)
 
 The enrichment can query AlienVault OTX through a command of yours: given a value (IP or domain), it must print `Apariciones en pulses de OTX: N` and one line `  - <name> (id=<id>, creada=<ISO date>, tags=<tags>)` per pulse. Without that variable, OTX is skipped.

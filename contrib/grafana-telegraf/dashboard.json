@@ -1,0 +1,1239 @@
+{
+ "__inputs": [
+  {
+   "name": "DS_INFLUXDB",
+   "label": "InfluxDB",
+   "description": "Fuente de datos con el bucket donde Telegraf escribe las medidas correo_*",
+   "type": "datasource",
+   "pluginId": "influxdb",
+   "pluginName": "InfluxDB"
+  }
+ ],
+ "__requires": [
+  {
+   "type": "datasource",
+   "id": "influxdb",
+   "name": "InfluxDB",
+   "version": "1.0.0"
+  }
+ ],
+ "annotations": {
+  "list": []
+ },
+ "editable": true,
+ "panels": [
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "fixedColor": "text",
+      "mode": "fixed"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "correos"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Correos distintos"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "malicioso"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Maliciosos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "red",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "sospechoso"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Sospechosos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "orange",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "spam"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Spam"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "blue",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "legitimo"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Legítimos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "green",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 12,
+    "x": 0,
+    "y": 0
+   },
+   "id": 1,
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "justifyMode": "center",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "textMode": "value_and_name"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "tmax = (from(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\" and r._field == \"correos\")\n  |> last()\n  |> findColumn(fn: (key) => true, column: \"_time\"))[0]\nfrom(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\")\n  |> last()\n  |> filter(fn: (r) => r._time == tmax)\n  |> filter(fn: (r) => contains(value: r._field, set: [\"correos\", \"malicioso\", \"sospechoso\", \"spam\", \"legitimo\"]))\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"correos\", \"malicioso\", \"sospechoso\", \"spam\", \"legitimo\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Correos analizados",
+   "transformations": [
+    {
+     "id": "organize",
+     "options": {
+      "indexByName": {
+       "correos": 0,
+       "legitimo": 4,
+       "malicioso": 1,
+       "sospechoso": 2,
+       "spam": 3
+      }
+     }
+    }
+   ],
+   "type": "stat"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "fixedColor": "text",
+      "mode": "fixed"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "campanas"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Campañas"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "envios"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Reenvíos recibidos"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "iocs_graylog_ip"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "IPs en Graylog"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "iocs_graylog_dominio"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Dominios en Graylog"
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 8,
+    "x": 12,
+    "y": 0
+   },
+   "id": 2,
+   "options": {
+    "colorMode": "value",
+    "graphMode": "none",
+    "justifyMode": "center",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "textMode": "value_and_name"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "tmax = (from(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\" and r._field == \"correos\")\n  |> last()\n  |> findColumn(fn: (key) => true, column: \"_time\"))[0]\nfrom(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\")\n  |> last()\n  |> filter(fn: (r) => r._time == tmax)\n  |> filter(fn: (r) => contains(value: r._field, set: [\"campanas\", \"envios\", \"iocs_graylog_ip\", \"iocs_graylog_dominio\"]))\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"campanas\", \"envios\", \"iocs_graylog_ip\", \"iocs_graylog_dominio\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Campañas, reenvíos e IOCs",
+   "transformations": [
+    {
+     "id": "organize",
+     "options": {
+      "indexByName": {
+       "campanas": 0,
+       "envios": 1,
+       "iocs_graylog_dominio": 3,
+       "iocs_graylog_ip": 2
+      }
+     }
+    }
+   ],
+   "type": "stat"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "dateTimeFromNow"
+    },
+    "overrides": []
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 20,
+    "y": 0
+   },
+   "id": 3,
+   "options": {
+    "colorMode": "none",
+    "graphMode": "none",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "textMode": "value"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "tmax = (from(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\" and r._field == \"correos\")\n  |> last()\n  |> findColumn(fn: (key) => true, column: \"_time\"))[0]\nfrom(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\")\n  |> last()\n  |> filter(fn: (r) => r._time == tmax)\n  |> filter(fn: (r) => r._field == \"ultimo_analisis\")\n  |> map(fn: (r) => ({_time: r._time, \"Último análisis\": float(v: r._value) * 1000.0}))",
+     "refId": "A"
+    }
+   ],
+   "title": "Último análisis",
+   "type": "stat"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "barAlignment": 0,
+      "drawStyle": "bars",
+      "fillOpacity": 80,
+      "lineWidth": 1,
+      "showPoints": "never",
+      "stacking": {
+       "group": "A",
+       "mode": "normal"
+      }
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "legitimo"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Legítimos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "green",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "spam"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Spam"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "blue",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "sospechoso"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Sospechosos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "orange",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "malicioso"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Maliciosos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "red",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 4
+   },
+   "id": 4,
+   "interval": "1d",
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "none"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "from(bucket: \"home\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"correo_dia\" and r.host == \"${host}\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"legitimo\", \"spam\", \"sospechoso\", \"malicioso\"]))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Correos nuevos por día y veredicto",
+   "type": "timeseries"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "barAlignment": 0,
+      "drawStyle": "bars",
+      "fillOpacity": 80,
+      "lineWidth": 1,
+      "showPoints": "never",
+      "stacking": {
+       "group": "A",
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "riesgo_medio"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Medio"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "yellow",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "riesgo_max"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Máximo"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "red",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 4
+   },
+   "id": 5,
+   "interval": "1d",
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "none"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "from(bucket: \"home\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"correo_dia\" and r.host == \"${host}\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"riesgo_medio\", \"riesgo_max\"]))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Riesgo por día",
+   "type": "timeseries"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "barAlignment": 0,
+      "drawStyle": "bars",
+      "fillOpacity": 80,
+      "lineWidth": 1,
+      "showPoints": "never",
+      "stacking": {
+       "group": "A",
+       "mode": "normal"
+      }
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "cabeceras"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Cabeceras"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "cuerpo"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Cuerpo"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "adjuntos"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Adjuntos"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "urls"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Enlaces"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "enriquecimiento"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Enriquecimiento"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "otros"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Otros"
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 12
+   },
+   "id": 6,
+   "interval": "1d",
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "none"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "from(bucket: \"home\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"correo_indicador\" and r.host == \"${host}\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"cabeceras\", \"cuerpo\", \"adjuntos\", \"urls\", \"enriquecimiento\", \"otros\"]))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Indicadores por origen y día",
+   "type": "timeseries"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "barAlignment": 0,
+      "drawStyle": "bars",
+      "fillOpacity": 80,
+      "lineWidth": 1,
+      "showPoints": "never",
+      "stacking": {
+       "group": "A",
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "envios"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Recibidos"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "blue",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "reutilizados"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Ya analizados"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "purple",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 12,
+    "y": 12
+   },
+   "id": 7,
+   "interval": "1d",
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "none"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "from(bucket: \"home\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"correo_envios\" and r.host == \"${host}\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"envios\", \"reutilizados\"]))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Reenvíos por día",
+   "type": "timeseries"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "barAlignment": 0,
+      "drawStyle": "bars",
+      "fillOpacity": 80,
+      "lineWidth": 1,
+      "showPoints": "never",
+      "stacking": {
+       "group": "A",
+       "mode": "none"
+      }
+     },
+     "unit": "s"
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "segundos_medio"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Medio"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "segundos_max"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Máximo"
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 18,
+    "y": 12
+   },
+   "id": 8,
+   "interval": "1d",
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "none"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "from(bucket: \"home\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"correo_modelo\" and r.host == \"${host}\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"segundos_medio\", \"segundos_max\"]))\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])",
+     "refId": "A"
+    }
+   ],
+   "title": "Tiempo del modelo por día",
+   "type": "timeseries"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "pass"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "pass"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "green",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "fail"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "fail"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "red",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "softfail"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "softfail"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "orange",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "neutral"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "neutral"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "yellow",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "none"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "none"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "purple",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "ausente"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "ausente"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "blue",
+         "mode": "fixed"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "otro"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "otro"
+       },
+       {
+        "id": "color",
+        "value": {
+         "fixedColor": "text",
+         "mode": "fixed"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 9,
+    "w": 8,
+    "x": 0,
+    "y": 20
+   },
+   "id": 9,
+   "options": {
+    "barWidth": 0.7,
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "orientation": "horizontal",
+    "showValue": "auto",
+    "stacking": "normal",
+    "tooltip": {
+     "mode": "multi"
+    },
+    "xField": "prueba"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "tmax = (from(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\" and r._field == \"correos\")\n  |> last()\n  |> findColumn(fn: (key) => true, column: \"_time\"))[0]\nfrom(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_autenticacion\" and r.host == \"${host}\")\n  |> last()\n  |> filter(fn: (r) => r._time == tmax)\n  |> group()\n  |> pivot(rowKey: [\"prueba\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"prueba\", \"pass\", \"fail\", \"softfail\", \"neutral\", \"none\", \"ausente\", \"otro\"])\n  |> sort(columns: [\"prueba\"], desc: true)",
+     "refId": "A"
+    }
+   ],
+   "title": "Autenticación (correos con cabeceras)",
+   "type": "barchart"
+  },
+  {
+   "datasource": {
+    "type": "influxdb",
+    "uid": "${DS_INFLUXDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "align": "auto"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "campana"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Campaña"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "correos"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Correos"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "direcciones"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Remitentes"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "dominios"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Dominios"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "asn"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "ASN"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "maliciosos"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Maliciosos"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "riesgo_max"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Riesgo máx."
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "primera"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Primer envío"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "ultima"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Último envío"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "primera"
+      },
+      "properties": [
+       {
+        "id": "unit",
+        "value": "dateTimeAsIso"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "ultima"
+      },
+      "properties": [
+       {
+        "id": "unit",
+        "value": "dateTimeAsIso"
+       }
+      ]
+     }
+    ]
+   },
+   "gridPos": {
+    "h": 9,
+    "w": 16,
+    "x": 8,
+    "y": 20
+   },
+   "id": 10,
+   "options": {
+    "cellHeight": "sm",
+    "showHeader": true
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "${DS_INFLUXDB}"
+     },
+     "query": "tmax = (from(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_total\" and r.host == \"${host}\" and r._field == \"correos\")\n  |> last()\n  |> findColumn(fn: (key) => true, column: \"_time\"))[0]\nfrom(bucket: \"home\")\n  |> range(start: -1y)\n  |> filter(fn: (r) => r._measurement == \"correo_campana\" and r.host == \"${host}\")\n  |> last()\n  |> filter(fn: (r) => r._time == tmax)\n  |> group()\n  |> pivot(rowKey: [\"campana\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({r with primera: time(v: r.primera * 1000000000), ultima: time(v: r.ultima * 1000000000)}))\n  |> keep(columns: [\"campana\", \"correos\", \"direcciones\", \"dominios\", \"asn\", \"maliciosos\", \"riesgo_max\", \"primera\", \"ultima\"])\n  |> sort(columns: [\"ultima\"], desc: true)",
+     "refId": "A"
+    }
+   ],
+   "title": "Campañas: mismo texto o enlace desde remitentes distintos",
+   "type": "table"
+  },
+  {
+   "gridPos": {
+    "h": 5,
+    "w": 24,
+    "x": 0,
+    "y": 29
+   },
+   "id": 11,
+   "options": {
+    "content": "Totales de `analisis.db` del analista de correo (`contrib/grafana-telegraf/metricas.py`, tras cada pasada de `run.sh`), leídos por Telegraf de `/var/lib/analista-correo-metricas/metricas.lp`. Solo cuentas: ni asuntos, ni remitentes, ni IOCs (los IOCs están en las lookup tables de Graylog).\n\n- Un correo es una **huella** distinta, con el veredicto de su último análisis; cuenta el día de su primer análisis.\n- **Campaña**: correos unidos por la misma plantilla de texto, el mismo enlace de alojamiento compartido o el mismo alias del PTR, enviados desde 2 direcciones o más. El id es un hash del primer correo.\n- Los puntos diarios llevan la hora de las 00:00 UTC.",
+    "mode": "markdown"
+   },
+   "title": "Origen de los datos",
+   "type": "text"
+  }
+ ],
+ "refresh": "5m",
+ "schemaVersion": 39,
+ "tags": [
+  "correo",
+  "seguridad"
+ ],
+ "templating": {
+  "list": [
+   {
+    "name": "host",
+    "type": "textbox",
+    "label": "Host de Telegraf",
+    "query": "analizador",
+    "current": {
+     "text": "analizador",
+     "value": "analizador"
+    },
+    "hide": 0
+   }
+  ]
+ },
+ "time": {
+  "from": "now-30d",
+  "to": "now"
+ },
+ "timezone": "browser",
+ "title": "Analista de correo",
+ "uid": "analista-correo",
+ "version": 1
+}

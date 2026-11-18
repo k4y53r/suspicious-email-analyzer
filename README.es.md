@@ -338,10 +338,16 @@ exportaciones opcionales en `contrib/`: listas CSV de IPs y dominios maliciosos 
 | Objetivo | Cómo | Dónde |
 |---|---|---|
 | Detectarlo en tu red (Graylog o cualquier SIEM) | Las listas CSV (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) sirven de lookup table: alerta cuando un cliente de tu LAN resuelve o contacta una IP o un dominio que ya llegó por correo. | `contrib/README.es.md`, «Exportación de IOCs» |
-| Panel (Grafana) | `metricas.py` escribe line protocol de InfluxDB y Telegraf lo recoge. Medidas: `correo_dia` (veredictos y riesgo medio por día), `correo_indicador` (qué lo disparó: cabeceras, cuerpo, adjuntos, URLs, enriquecimiento), `correo_envios` (reenvíos y análisis reutilizados), `correo_modelo` (latencia del modelo), `correo_autenticacion` (resultados de SPF/DKIM/DMARC), `correo_total` y `correo_campana` (campañas). | `contrib/README.es.md`, «Métricas para Grafana» |
+| Panel (Grafana) | `metricas.py` escribe line protocol de InfluxDB y Telegraf lo recoge. Medidas: `correo_dia` (veredictos y riesgo medio por día), `correo_indicador` (qué lo disparó: cabeceras, cuerpo, adjuntos, URLs, enriquecimiento), `correo_envios` (reenvíos y análisis reutilizados), `correo_modelo` (latencia del modelo), `correo_autenticacion` (resultados de SPF/DKIM/DMARC), `correo_total` y `correo_campana` (campañas). Hay un panel importable en `contrib/grafana-telegraf/dashboard.json`. | `contrib/README.es.md`, «Métricas para Grafana» |
 | Plataforma de inteligencia de amenazas (MISP) | Lee esas mismas listas CSV (o la tabla `iocs`) y crea un evento de MISP por campaña, con las IPs y dominios como atributos. En `contrib/README.es.md` hay un ejemplo corto con PyMISP. | `contrib/README.es.md`, «MISP» |
 | Bloquear en el DNS (AdGuard Home, Pi-hole…) | Convierte el CSV de dominios en una lista de bloqueo. Revísala antes: es una muestra de lo que llegó a tu buzón, no un feed curado. | tu filtro DNS |
 | Preguntas puntuales | Las consultas SQL de «Base de datos y duplicados» (infraestructura compartida por ASN, campañas por dominio raíz, plantilla o kit). | `analisis.db` |
+
+![Panel de Grafana: totales y gráficas por día](docs/img/dashboard-grafana-resumen.png)
+*El panel de `contrib/grafana-telegraf/dashboard.json`: totales por veredicto, correos nuevos por día, riesgo, indicadores por origen, reenvíos y latencia del modelo. Datos reales del buzón del autor.*
+
+![Panel de Grafana: autenticación y campañas](docs/img/dashboard-grafana-detalle.png)
+*Resultados de SPF/DKIM/DMARC y campañas (el mismo texto o enlace de alojamiento desde remitentes distintos).*
 
 Qué conviene saber antes de automatizar encima:
 - Las listas CSV solo llevan veredictos maliciosos, quitan la infraestructura compartida (webmail, acortadores,

@@ -309,10 +309,16 @@ and two optional exports in `contrib/`: CSV lists of malicious IPs and domains, 
 | Goal | How | Where |
 |---|---|---|
 | Detect it on your network (Graylog or any SIEM) | The CSV lists (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) are lookup tables: alert when a client of your LAN resolves or contacts an IP or domain that already arrived by mail. | `contrib/README.md`, "Exporting IOCs" |
-| Dashboard (Grafana) | `metricas.py` writes InfluxDB line protocol and Telegraf ships it. Measurements: `correo_dia` (verdicts and mean risk per day), `correo_indicador` (what triggered: headers, body, attachments, URLs, enrichment), `correo_envios` (forwards and reused analyses), `correo_modelo` (model latency), `correo_autenticacion` (SPF/DKIM/DMARC results), `correo_total` and `correo_campana` (campaigns). | `contrib/README.md`, "Metrics for Grafana" |
+| Dashboard (Grafana) | `metricas.py` writes InfluxDB line protocol and Telegraf ships it. Measurements: `correo_dia` (verdicts and mean risk per day), `correo_indicador` (what triggered: headers, body, attachments, URLs, enrichment), `correo_envios` (forwards and reused analyses), `correo_modelo` (model latency), `correo_autenticacion` (SPF/DKIM/DMARC results), `correo_total` and `correo_campana` (campaigns). An importable dashboard is in `contrib/grafana-telegraf/dashboard.json`. | `contrib/README.md`, "Metrics for Grafana" |
 | Threat-intelligence platform (MISP) | Read the same CSV lists (or the `iocs` table) and create one MISP event per campaign, with the IPs and domains as attributes. A short PyMISP example is in `contrib/README.md`. | `contrib/README.md`, "MISP" |
 | Block at the DNS (AdGuard Home, Pi-hole…) | Turn the domain CSV into a blocklist. Review it first: it is a sample of what reached your own mailbox, not a curated feed. | your DNS filter |
 | Ad-hoc questions | The SQL queries of "Database and duplicates" (shared infrastructure by ASN, campaigns by root domain, template or kit). | `analisis.db` |
+
+![Grafana dashboard: totals and daily charts](docs/img/dashboard-grafana-resumen.png)
+*The dashboard in `contrib/grafana-telegraf/dashboard.json`: totals by verdict, new mails per day, risk, indicators by origin, forwards and model latency. Real data from the author's mailbox; panel texts are in Spanish, like the program's output.*
+
+![Grafana dashboard: authentication and campaigns](docs/img/dashboard-grafana-detalle.png)
+*SPF/DKIM/DMARC results, and campaigns (the same text or hosting link sent from different senders).*
 
 Things worth knowing before you automate on top of it:
 - The CSV lists only carry malicious verdicts, drop shared infrastructure (webmail, shorteners, sending platforms), your
