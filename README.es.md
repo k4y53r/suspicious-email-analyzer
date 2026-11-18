@@ -9,6 +9,29 @@ sale de tu equipo salvo el correo con tu proveedor y las consultas de enriquecim
 
 > **English:** see [README.md](README.md). Esta es la versión en castellano; el resto de la documentación técnica (reglas, esquema, mensajes del programa) está solo en castellano.
 
+## Cómo encajan las piezas
+
+```mermaid
+flowchart LR
+    U["Tú: reenvías un correo sospechoso"] --> MB[("Tu buzón (IMAP)")]
+    subgraph HOST["Equipo del analizador (LXC o Debian)"]
+        T["temporizador o cron cada 2 min: run.sh"] --> B["buzon.py: una pasada por el INBOX"]
+        B --> A["analizar_correo.py: desmonta y puntúa indicadores"]
+        A --> E["enriquecer.py: listas, RDAP, abuse.ch, OTX (opcional)"]
+        A --> L["Ollama: modelo local, segunda opinión"]
+        B --> S[("Estado: analisis.db y copias .eml")]
+    end
+    MB --> B
+    B -->|"respuesta: veredicto y analisis.json"| U
+    E -.-> NET(("Servicios públicos de reputación"))
+    S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["Listas CSV de IPs y dominios maliciosos"]
+    CSV --> GL["Graylog: lookup tables y alertas"]
+    CSV --> MISP["MISP: un evento por campaña"]
+    S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Panel de Grafana"]
+```
+
+`contrib/despliegue/` monta el equipo del analizador (contenedor, Ollama, modelo y temporizador) con un comando; todo lo que queda a la derecha del analizador es opcional.
+
 ## Inicio rápido
 
 Requisitos: Python 3.11+, [Ollama](https://ollama.com) con un modelo (`ollama pull qwen2.5:7b`; `qwen2.5:3b` si vas
@@ -270,6 +293,32 @@ Campañas (mismo dominio raíz en varios análisis, o misma plantilla o kit desd
 sqlite3 ~/.local/state/analista-correo/analisis.db "SELECT i.raiz, count(DISTINCT a.id), group_concat(DISTINCT a.veredicto) FROM iocs i JOIN analisis a ON a.id = i.analisis_id WHERE i.tipo = 'dominio' AND NOT i.compartido GROUP BY i.raiz ORDER BY 2 DESC"
 sqlite3 ~/.local/state/analista-correo/analisis.db "SELECT i.tipo, i.valor, group_concat(DISTINCT a.id), group_concat(DISTINCT a.veredicto) FROM iocs i JOIN analisis a ON a.id = i.analisis_id WHERE i.rol = 'campana' OR i.tipo = 'alias_ptr' GROUP BY i.tipo, i.valor HAVING count(DISTINCT a.id) > 1 ORDER BY count(DISTINCT a.id) DESC"
 ```
+
+## Qué hacer con la salida
+
+El analizador está pensado para alimentar las herramientas que ya tengas. Cada análisis deja cuatro tipos de salida: el
+`analisis.json` adjunto a cada respuesta (veredicto, riesgo, indicadores e `iocs`), la base SQLite (`analisis.db`) y dos
+exportaciones opcionales en `contrib/`: listas CSV de IPs y dominios maliciosos y métricas en line protocol de InfluxDB.
+
+| Objetivo | Cómo | Dónde |
+|---|---|---|
+| Detectarlo en tu red (Graylog o cualquier SIEM) | Las listas CSV (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) sirven de lookup table: alerta cuando un cliente de tu LAN resuelve o contacta una IP o un dominio que ya llegó por correo. | `contrib/README.es.md`, «Exportación de IOCs» |
+| Panel (Grafana) | `metricas.py` escribe line protocol de InfluxDB y Telegraf lo recoge. Medidas: `correo_dia` (veredictos y riesgo medio por día), `correo_indicador` (qué lo disparó: cabeceras, cuerpo, adjuntos, URLs, enriquecimiento), `correo_envios` (reenvíos y análisis reutilizados), `correo_modelo` (latencia del modelo), `correo_autenticacion` (resultados de SPF/DKIM/DMARC), `correo_total` y `correo_campana` (campañas). | `contrib/README.es.md`, «Métricas para Grafana» |
+| Plataforma de inteligencia de amenazas (MISP) | Lee esas mismas listas CSV (o la tabla `iocs`) y crea un evento de MISP por campaña, con las IPs y dominios como atributos. En `contrib/README.es.md` hay un ejemplo corto con PyMISP. | `contrib/README.es.md`, «MISP» |
+| Bloquear en el DNS (AdGuard Home, Pi-hole…) | Convierte el CSV de dominios en una lista de bloqueo. Revísala antes: es una muestra de lo que llegó a tu buzón, no un feed curado. | tu filtro DNS |
+| Preguntas puntuales | Las consultas SQL de «Base de datos y duplicados» (infraestructura compartida por ASN, campañas por dominio raíz, plantilla o kit). | `analisis.db` |
+
+Qué conviene saber antes de automatizar encima:
+- Las listas CSV solo llevan veredictos maliciosos, quitan la infraestructura compartida (webmail, acortadores,
+  plataformas de envío), tus dominios y los populares del ranking Tranco, y limitan la edad de lo que exportan (90 días
+  las IPs, 180 los dominios). Aun así son la opinión de un modelo sobre unos pocos correos: deja a una persona en el
+  circuito antes de bloquear.
+- Un enlace a alojamiento compartido es un IOC como URL completa, no como dominio; el exportador ya mantiene esa
+  distinción.
+- `info` en el CSV solo lleva datos propios (riesgo, campaña, fecha, número de correos), nunca el asunto ni el texto,
+  porque los escribe el atacante.
+- Da a cada integración sus propias credenciales con el mínimo privilegio (una clave de MISP solo Publisher, un token de
+  InfluxDB solo de escritura) y guárdalas en ficheros con permisos 600, no en la línea de comandos.
 
 ## Enriquecimiento (`enriquecer.py`, desde la 1.2)
 

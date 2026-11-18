@@ -11,6 +11,29 @@ provider, and the enrichment lookups to public reputation services, which you ca
 The core is plain Python (standard library only, no third-party packages). The program's messages, rule names and JSON
 fields are in Spanish; this README is the English reference, and the detailed rule history lives in `README.es.md`.
 
+## How the pieces fit
+
+```mermaid
+flowchart LR
+    U["You: forward a suspicious mail"] --> MB[("Your mailbox (IMAP)")]
+    subgraph HOST["Analyzer host (LXC or Debian)"]
+        T["timer or cron every 2 min: run.sh"] --> B["buzon.py: one pass over the INBOX"]
+        B --> A["analizar_correo.py: parse and technical indicators"]
+        A --> E["enriquecer.py: lists, RDAP, abuse.ch, OTX (optional)"]
+        A --> L["Ollama: local model, second opinion"]
+        B --> S[("State: analisis.db and .eml copies")]
+    end
+    MB --> B
+    B -->|"reply: verdict and analisis.json"| U
+    E -.-> NET(("Public reputation services"))
+    S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["CSV lists of malicious IPs and domains"]
+    CSV --> GL["Graylog lookup tables and alerts"]
+    CSV --> MISP["MISP: one event per campaign"]
+    S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Grafana dashboard"]
+```
+
+`contrib/despliegue/` builds the analyzer host (the container, Ollama, the model and the timer) in one command; everything right of the analyzer is optional.
+
 ## Quick start
 
 Requirements: Python 3.11+, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`; `qwen2.5:3b` if memory
@@ -242,6 +265,30 @@ sqlite3 ~/.local/state/analista-correo/analisis.db "SELECT e.fecha, e.reutilizad
 ```
 
 More queries (shared infrastructure by ASN, campaigns by root domain, template or kit) are in `README.es.md`.
+
+## Using the output
+
+The analyzer is built so its results can feed the tools you may already run. Every analysis leaves four kinds of output:
+the `analisis.json` attached to each reply (verdict, risk, indicators and `iocs`), the SQLite database (`analisis.db`),
+and two optional exports in `contrib/`: CSV lists of malicious IPs and domains, and InfluxDB line-protocol metrics.
+
+| Goal | How | Where |
+|---|---|---|
+| Detect it on your network (Graylog or any SIEM) | The CSV lists (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) are lookup tables: alert when a client of your LAN resolves or contacts an IP or domain that already arrived by mail. | `contrib/README.md`, "Exporting IOCs" |
+| Dashboard (Grafana) | `metricas.py` writes InfluxDB line protocol and Telegraf ships it. Measurements: `correo_dia` (verdicts and mean risk per day), `correo_indicador` (what triggered: headers, body, attachments, URLs, enrichment), `correo_envios` (forwards and reused analyses), `correo_modelo` (model latency), `correo_autenticacion` (SPF/DKIM/DMARC results), `correo_total` and `correo_campana` (campaigns). | `contrib/README.md`, "Metrics for Grafana" |
+| Threat-intelligence platform (MISP) | Read the same CSV lists (or the `iocs` table) and create one MISP event per campaign, with the IPs and domains as attributes. A short PyMISP example is in `contrib/README.md`. | `contrib/README.md`, "MISP" |
+| Block at the DNS (AdGuard Home, Pi-hole…) | Turn the domain CSV into a blocklist. Review it first: it is a sample of what reached your own mailbox, not a curated feed. | your DNS filter |
+| Ad-hoc questions | The SQL queries of "Database and duplicates" (shared infrastructure by ASN, campaigns by root domain, template or kit). | `analisis.db` |
+
+Things worth knowing before you automate on top of it:
+- The CSV lists only carry malicious verdicts, drop shared infrastructure (webmail, shorteners, sending platforms), your
+  own domains and the popular domains of the Tranco ranking, and cap the age of what they export (90 days for IPs, 180
+  for domains). Even so they are one model's opinion on a few mails: keep a human in the loop before blocking.
+- A shared-hosting link is an IOC as a full URL, not as a domain; the exporter already keeps that distinction.
+- `info` in the CSV only holds your own data (risk, campaign, date, number of mails), never the subject or the text,
+  because the attacker writes those.
+- Give each integration its own credentials with the least privilege it needs (a Publisher-only MISP key, a write-only
+  InfluxDB token) and keep them in files with mode 600, not on the command line.
 
 ## Enrichment (`enriquecer.py`, since 1.2)
 
