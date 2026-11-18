@@ -7,7 +7,7 @@
 - El modelo de Ollama se elige con `ANALISTA_CORREO_MODELO` (buzón y línea de comandos) o `--modelo` en `analizar_correo.py`; por defecto sigue siendo `qwen2.5:7b`.
 
 ## 1.15 (primera publicación)
-- Reglas de detección R1-R7 (ver `docs/detection-rules.es.md`): marcador de plantilla sin sustituir, nombre distinto de la firma y saludo por alias, remitente de sistema con nombre de persona, cebo íntimo (regla de respaldo y pregunta nueva al modelo), idioma ajeno (solo puerta), contradicción «conversación normal» frente a envío masivo con suelo 40, y escalón alto (20) del historial propio de ASN y prefijo.
+- Reglas de detección R1-R7 (ver `docs/detection-rules.md`): marcador de plantilla sin sustituir, nombre distinto de la firma y saludo por alias, remitente de sistema con nombre de persona, cebo íntimo (regla de respaldo y pregunta nueva al modelo), idioma ajeno (solo puerta), contradicción «conversación normal» frente a envío masivo con suelo 40, y escalón alto (20) del historial propio de ASN y prefijo.
 - Prompt: `conversacion_normal` redefinida; pregunta `cebo_intimo_o_chantaje` (rasgo de 25 puntos, no clase); el modelo ve señales informativas sin puntos.
 - `combinar` admite `masivo` y `puerta` (opcionales). `senales_info` nuevo en el JSON.
 - Pruebas: tablas SÍ/NO por regla, `combinar` y R7 con sqlite en memoria en `probar_reglas.py`; 10 sintéticos nuevos (3 cebos y 7 controles) en `pruebas/sinteticos/` y `corpus.tsv`.

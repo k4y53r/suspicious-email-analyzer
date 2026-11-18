@@ -1,53 +1,50 @@
-# Automatic deployment (Proxmox LXC or Debian)
+# Despliegue automático (LXC en Proxmox o Debian)
 
-**English** · [Castellano](README.es.md)
+[English](README.en.md) · **Castellano**
 
-Two scripts that leave the analyzer running without following the main README by hand. They simulate by default: without
-`--ejecutar` they only print what they would do.
+Dos scripts para dejar el analizador funcionando sin seguir el README a mano. Simulan por defecto: sin `--ejecutar` solo
+muestran lo que harían.
 
-- `crear-lxc.sh` (on the Proxmox node, as root): downloads the Debian 13 template if missing, creates an unprivileged LXC
-  with DHCP, uploads `instalar.sh` and this very repository, and runs them inside.
-- `instalar.sh` (as root, inside the LXC or any Debian 12/13): installs packages and Ollama, pulls the model, copies the
-  code to `/home/analista/analista-correo`, leaves your `buzon.env` with mode 600, runs the tests and creates a systemd
-  timer that runs `run.sh` every 2 minutes.
+- `crear-lxc.sh` (en el nodo Proxmox, como root): descarga la plantilla Debian 13 si falta, crea un LXC sin privilegios
+  con DHCP, sube `instalar.sh` y este mismo repositorio y los ejecuta dentro.
+- `instalar.sh` (como root, en el LXC o en cualquier Debian 12/13): instala paquetes y Ollama, descarga el modelo,
+  copia el código a `/home/analista/analista-correo`, deja tu `buzon.env` en 600, ejecuta las pruebas y crea un temporizador
+  de systemd que lanza `run.sh` cada 2 minutos.
 
-## All you have to provide
+## Lo único que tienes que poner
 
-1. Your mailbox: `cp buzon.env.example buzon.env` and edit it (server, user, password, `MX_BUZON`, `REMITENTES`). It is
-   rejected if it still holds the example values. The password travels by file, never on the command line.
-2. The container parameters, if the defaults do not suit you:
+1. Tu buzón: `cp buzon.env.example buzon.env` y edítalo (servidor, usuario, contraseña, `MX_BUZON`, `REMITENTES`). Se
+   rechaza si conserva los valores de ejemplo. La contraseña viaja por fichero, nunca por línea de comandos.
+2. Los parámetros del contenedor, si no te valen los de por defecto:
 
-| Option | Default | What for |
+| Opción | Por defecto | Para qué |
 |---|---|---|
-| `--modelo` | `qwen2.5:7b` | Ollama model. With more memory or a GPU, a larger one (e.g. `qwen2.5:14b`; see sizes at [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` if memory is tight. |
-| `--memoria` / `--nucleos` / `--disco` | 8192 MiB / 4 / 24 GB | Raise the memory with a larger model: the model must fit in RAM next to the system. |
-| `--vmid`, `--nombre` | next free id, `analista-correo` | Container id and name. |
-| `--almacen`, `--plantillas`, `--puente` | `local-lvm`, `local`, `vmbr0` | Storage and network of your Proxmox. |
-| `--onboot` | no | Start the container with the node. |
-| `--fuente` | this repository | A `.tgz` or an `https://` git URL, to deploy another copy. |
+| `--modelo` | `qwen2.5:7b` | Modelo de Ollama. Con más memoria o GPU, uno mayor (p. ej. `qwen2.5:14b`; mira tamaños en [ollama.com/library](https://ollama.com/library)); `qwen2.5:3b` si vas justo. |
+| `--memoria` / `--nucleos` / `--disco` | 8192 MiB / 4 / 24 GB | Sube la memoria con un modelo mayor: el modelo cabe en RAM además del sistema. |
+| `--vmid`, `--nombre` | siguiente libre, `analista-correo` | Identificador y nombre del CT. |
+| `--almacen`, `--plantillas`, `--puente` | `local-lvm`, `local`, `vmbr0` | Almacenes y red de tu Proxmox. |
+| `--onboot` | no | Arrancar el CT con el nodo. |
+| `--fuente` | este repositorio | Un `.tgz` o una URL `https://` git, si quieres desplegar otra copia. |
 
 ```
-cp buzon.env.example buzon.env      # edit it
-./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simulates
+cp buzon.env.example buzon.env      # edítalo
+./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384            # simula
 ./contrib/despliegue/crear-lxc.sh --env buzon.env --modelo qwen2.5:14b --memoria 16384 --ejecutar
 ```
 
-Without `--env` everything is installed but the timer stays disabled: edit `~/.config/analista-correo/buzon.env` inside
-the container (user `analista`) and enable it with `systemctl enable --now analista-correo.timer`. `instalar.sh` can also
-be run on its own on any Debian 12/13 machine (`--fuente` defaults to this repository).
+Sin `--env` todo se instala pero el temporizador queda sin activar: edita `~/.config/analista-correo/buzon.env` dentro del
+CT (usuario `analista`) y activa `systemctl enable --now analista-correo.timer`.
 
-## Changing the model later
+## Cambiar el modelo después
 
-The model is read from the `ANALISTA_CORREO_MODELO` environment variable (also usable by hand with `analizar_correo.py` and
-`buzon.py`). The timer carries it in `/etc/systemd/system/analista-correo.service`: change that line, run
-`systemctl daemon-reload` and `ollama pull <model>`. Mails already analysed are not re-analysed automatically with the
-new model.
+El modelo lo lee la variable de entorno `ANALISTA_CORREO_MODELO` (también en `analizar_correo.py` y `buzon.py` a mano). El
+temporizador la lleva en `/etc/systemd/system/analista-correo.service`: cambia esa línea, `systemctl daemon-reload` y
+`ollama pull <modelo>`. Los correos ya analizados no se reanalizan solos con el modelo nuevo.
 
-## Time and what it touches
+## Qué tarda y qué toca
 
-About 18 minutes the first time with 4 vCPU and no GPU (Ollama and the model ~9 min; tests and the first analysis with the
-cold model the rest); `instalar.sh --sin-prueba` skips the last part. Each mail takes 1-2 minutes on CPU only. Inside the
-container it touches: Debian packages, the `analista` user, Ollama (installed with its official script,
-`https://ollama.com/install.sh`, without hash verification), the code, `buzon.env` and the two systemd units. To undo it:
-`pct stop <id>; pct destroy <id> --purge`. If it fails with the container already created, the script says so. Tested on
-Proxmox VE 9 with Debian 13.
+Unos 18 minutos la primera vez con 4 vCPU y sin GPU (Ollama y el modelo ~9 min, pruebas y primer análisis con el modelo en
+frío el resto); `instalar.sh --sin-prueba` se salta la última parte. Cada correo tarda 1-2 minutos solo con CPU. Dentro del
+CT toca: paquetes de Debian, el usuario `analista`, Ollama (se instala con su script oficial, `https://ollama.com/install.sh`,
+sin verificar hash), el código, el `buzon.env` y las dos unidades systemd. Para deshacerlo: `pct stop <id>; pct destroy <id> --purge`.
+Si falla con el CT creado, el script lo dice. Probado en Proxmox VE 9 con Debian 13.

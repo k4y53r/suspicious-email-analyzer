@@ -1,176 +1,169 @@
 # suspicious-email-analyzer
 
-**English** · [Castellano](README.es.md)
+[English](README.en.md) · **Castellano**
 
-**Local analyzer for suspicious e-mails (phishing, fraud, malware, spam).** You forward a doubtful message to a
-mailbox you own and get back a JSON risk assessment: deterministic technical indicators (SPF/DKIM/DMARC, links,
-attachments inspected from the inside without executing anything) plus the opinion of a local model running on
-[Ollama](https://ollama.com) (`qwen2.5:7b` by default). Nothing leaves your machine except the mail itself, which goes through your
-provider, and the enrichment lookups to public reputation services, which you can turn off.
+**Analizador local de correos sospechosos (phishing, fraude, malware, spam).** Reenvías un correo dudoso a un buzón
+propio y recibes un JSON con la valoración de riesgo: indicadores técnicos deterministas (SPF/DKIM/DMARC, enlaces,
+adjuntos analizados por dentro y sin ejecutarlos) más la opinión de un modelo local con Ollama (`qwen2.5:7b`). Nada
+sale de tu equipo salvo el correo con tu proveedor y las consultas de enriquecimiento a servicios de reputación públicos, que puedes desactivar.
 
-The program is called `analista-correo` in the code, the file names and the settings. The core is plain Python (standard library only, no third-party packages). The program's messages, rule names and JSON
-fields are in Spanish; this README is the overview and the detailed documentation is in [`docs/`](#documentation).
+> **English version:** [README.en.md](README.en.md). El programa se llama `analista-correo` en el código, los nombres de fichero y la configuración; sus mensajes, reglas y campos JSON están en castellano.
 
-## How the pieces fit
+## Cómo encajan las piezas
 
 ```mermaid
 flowchart LR
-    U["You: forward a suspicious mail"] --> MB[("Your mailbox (IMAP)")]
-    subgraph HOST["Analyzer host (LXC or Debian)"]
-        T["timer or cron every 2 min: run.sh"] --> B["buzon.py: one pass over the INBOX"]
-        B --> F{"Sender in REMITENTES, not an auto-reply, DKIM ok (if EXIGIR_DKIM)?"}
-        F -- "no" --> SK["Marked read, no reply"]
-        F -- "yes" --> D{"Already analysed? Fingerprint, or Message-ID and subject"}
-        D -- "yes" --> R1["Reply with the stored result (YA ANALIZADO): no model, no lookups"]
-        D -- "no" --> A["analizar_correo.py: parse and technical indicators"]
-        A --> E["enriquecer.py: lists, RDAP, abuse.ch, OTX (optional)"]
-        A --> L["Ollama: local model, second opinion"]
-        E --> V["Final risk and verdict"]
+    U["Tú: reenvías un correo sospechoso"] --> MB[("Tu buzón (IMAP)")]
+    subgraph HOST["Equipo del analizador (LXC o Debian)"]
+        T["temporizador o cron cada 2 min: run.sh"] --> B["buzon.py: una pasada por el INBOX"]
+        B --> F{"¿Remitente en REMITENTES, no es respuesta automática, DKIM ok (si EXIGIR_DKIM)?"}
+        F -- "no" --> SK["Se marca leído, sin respuesta"]
+        F -- "sí" --> D{"¿Ya analizado? Huella, o Message-ID y asunto"}
+        D -- "sí" --> R1["Responde con el resultado guardado (YA ANALIZADO): sin modelo ni consultas"]
+        D -- "no" --> A["analizar_correo.py: desmonta y puntúa indicadores"]
+        A --> E["enriquecer.py: listas, RDAP, abuse.ch, OTX (opcional)"]
+        A --> L["Ollama: modelo local, segunda opinión"]
+        E --> V["Riesgo final y veredicto"]
         L --> V
-        V --> S[("State: analisis.db and .eml copies")]
-        V --> R2["Reply: verdict and analisis.json"]
+        V --> S[("Estado: analisis.db y copias .eml")]
+        V --> R2["Respuesta: veredicto y analisis.json"]
     end
     MB --> B
     R1 --> U
     R2 --> U
-    E -.-> NET(("Public reputation services"))
-    S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["CSV lists of malicious IPs and domains"]
-    CSV --> GL["Graylog lookup tables and alerts"]
-    CSV --> MISP["MISP: one event per campaign"]
-    S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Grafana dashboard"]
+    E -.-> NET(("Servicios públicos de reputación"))
+    S --> X1["contrib/graylog: exportar_graylog.py"] --> CSV["Listas CSV de IPs y dominios maliciosos"]
+    CSV --> GL["Graylog: lookup tables y alertas"]
+    CSV --> MISP["MISP: un evento por campaña"]
+    S --> X2["contrib/grafana-telegraf: metricas.py"] --> TG["Telegraf"] --> IDB[("InfluxDB")] --> GF["Panel de Grafana"]
 ```
 
-`contrib/despliegue/` builds the analyzer host (the container, Ollama, the model and the timer) in one command; everything right of the analyzer is optional.
+`contrib/despliegue/` monta el equipo del analizador (contenedor, Ollama, modelo y temporizador) con un comando; todo lo que queda a la derecha del analizador es opcional.
 
-## Quick start
+## Inicio rápido
 
-Requirements: Python 3.11+, [Ollama](https://ollama.com) with a model (`ollama pull qwen2.5:7b`; `qwen2.5:3b` if memory
-is tight; with more capacity, a larger one via `ANALISTA_CORREO_MODELO=qwen2.5:14b` or `--modelo` in `analizar_correo.py`),
-`dig` (package `dnsutils`/`bind-utils`, for the rDNS lookups of the enrichment) and, for `pruebas/probar.sh`, `jq`. For
-mailbox mode, a mail account with IMAP and SMTP.
+Requisitos: Python 3.11+, [Ollama](https://ollama.com) con un modelo (`ollama pull qwen2.5:7b`; `qwen2.5:3b` si vas
+justo de memoria; con más capacidad, uno mayor con `ANALISTA_CORREO_MODELO=qwen2.5:14b` o `--modelo` en `analizar_correo.py`), `dig` (paquete `dnsutils`/`bind-utils`, para el rDNS del enriquecimiento) y, para `pruebas/probar.sh`,
+`jq`. Para el modo buzón, una cuenta de correo con IMAP y SMTP.
 
 ```
 git clone https://github.com/k4y53r/suspicious-email-analyzer.git && cd suspicious-email-analyzer
-python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # one analysis, no mailbox
-python3 -I pruebas/probar_reglas.py                                    # tests, no model and no network
+python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # un análisis, sin buzón
+python3 -I pruebas/probar_reglas.py                                    # pruebas sin modelo ni red
 ```
 
-For mailbox mode:
+Para el modo buzón:
 
 ```
 mkdir -p ~/.config/analista-correo && cp buzon.env.example ~/.config/analista-correo/buzon.env
-chmod 600 ~/.config/analista-correo/buzon.env      # then edit it: server, user, MX_BUZON, REMITENTES
-ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # no IMAP/SMTP, no external services: prints the reply it would send (the local model is still needed)
+chmod 600 ~/.config/analista-correo/buzon.env      # y edítalo: servidor, usuario, MX_BUZON, REMITENTES
+ANALISTA_CORREO_SIN_ENRIQUECER=1 python3 buzon.py --eml pruebas/sinteticos/legitimo-trabajo.eml   # sin IMAP/SMTP ni servicios externos: imprime la respuesta que enviaría (el modelo local sí hace falta)
 ```
 
-**Automatic deployment** in a Proxmox LXC (or any Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (one command; you only provide your
-`buzon.env` and, if you want, another Ollama model with `--modelo`). To do it by hand, schedule `run.sh` from cron or a
-systemd timer (see [Mailbox mode](docs/mailbox-mode.md)). To forward from Thunderbird or Gmail, see [`guia-reenvio.md`](guia-reenvio.md) (Spanish). Optional extras
-(exporting IOCs to Graylog, metrics for Grafana) are in `contrib/`.
+Despliegue automático en un LXC de Proxmox (o en un Debian): [`contrib/despliegue/`](contrib/despliegue/README.md) (un comando; solo pones tu `buzon.env` y, si quieres, otro modelo de Ollama con `--modelo`). Para hacerlo a mano, programa `run.sh` en cron o en un timer de systemd (ver [Modo buzón](docs/mailbox-mode.md)). Para reenviar desde Thunderbird o Gmail,
+`guia-reenvio.md`. Lo opcional (exportar IOCs a Graylog, métricas para Grafana) está en `contrib/`.
 
-## Privacy and limits
+## Privacidad y límites
 
-- The analyzer does not open links or run attachments. The text of the mail reaches the local model; the mail, the
-  analyses and the replies are kept in `~/.local/state/analista-correo/` (directory 700, files 600).
-- A 7B model gets things wrong: treat the verdict as a second opinion. Mails can try to manipulate the model (prompt
-  injection); that is why hidden text and injection phrases score separately and the model cannot lower strong
-  indicators.
-- The enrichment lookups (abuse.ch, public lists, RDAP, OTX) send the IPs and domains of the mail to those services.
-  In `analizar_correo.py` they only happen with `--enriquecer`; mailbox mode (`buzon.py`) always does them unless you set
-  `ANALISTA_CORREO_SIN_ENRIQUECER=1` in the environment of `run.sh`/cron.
-- Security: see `SECURITY.md`. License: AGPL-3.0-only (`LICENSE`), copyright © 2026 k4y53r: you may use, modify and share it, but modified versions (including ones offered as a network service) must be published under the same license.
+- El analizador no abre enlaces ni ejecuta adjuntos. El texto del correo llega al modelo local; el correo, los
+  análisis y las respuestas quedan en `~/.local/state/analista-correo/` (700, ficheros 600).
+- Un modelo de 7B se equivoca: trata el veredicto como una segunda opinión. Los correos pueden intentar manipular al
+  modelo (inyección); por eso el texto oculto y las frases de inyección puntúan aparte y el modelo no puede rebajar los
+  indicadores fuertes.
+- Las consultas de enriquecimiento (abuse.ch, listas públicas, RDAP, OTX) envían a esos servicios IP y dominios del
+  correo. En `analizar_correo.py` solo ocurren con `--enriquecer`; el modo buzón (`buzon.py`) las hace siempre salvo que
+  pongas `ANALISTA_CORREO_SIN_ENRIQUECER=1` en el entorno de `run.sh`/cron.
+- Seguridad: ver `SECURITY.md`. Licencia: AGPL-3.0-only (`LICENSE`), copyright © 2026 k4y53r: puedes usarlo, modificarlo y compartirlo, pero las versiones modificadas (también las ofrecidas como servicio en red) deben publicarse con la misma licencia.
 
-## Third-party sources and attribution
+## Fuentes de terceros y atribución
 
-The (optional) enrichment uses public services and lists with their own terms of use; read them before heavy use:
-[abuse.ch](https://abuse.ch) (ThreatFox, URLhaus; a free Auth-Key is required), the [Tor](https://check.torproject.org/torbulkexitlist)
-exit list, [Feodo Tracker](https://feodotracker.abuse.ch/), [Spamhaus DROP](https://www.spamhaus.org/drop/) (its own terms),
-the [Tranco](https://tranco-list.eu) ranking (cite it if you publish results that use it), RDAP (public registries of
-each RIR/registry) and, if you configure it, AlienVault OTX.
+El enriquecimiento (opcional) usa servicios y listas públicas con sus propios términos de uso; revísalos antes de un uso intensivo: [abuse.ch](https://abuse.ch) (ThreatFox, URLhaus; exige una Auth-Key gratuita), la lista de salidas de [Tor](https://check.torproject.org/torbulkexitlist), [Feodo Tracker](https://feodotracker.abuse.ch/), [Spamhaus DROP](https://www.spamhaus.org/drop/) (condiciones de uso propias), el ranking [Tranco](https://tranco-list.eu) (cítalo si publicas resultados que lo usen), RDAP (registros públicos de cada RIR/registro) y, si lo configuras, AlienVault OTX.
 
-## Usage
+## Uso
 
 ```
 python3 analizar_correo.py correo.eml
 python3 analizar_correo.py --reenviado reenviado.eml
 python3 analizar_correo.py --sin-modelo correo.eml
 python3 analizar_correo.py --modelo qwen2.5:3b correo.eml
-python3 analizar_correo.py --enriquecer correo.eml      # public lists, abuse.ch and RDAP (and OTX if configured)
+python3 analizar_correo.py --enriquecer correo.eml      # listas públicas, abuse.ch y RDAP (y OTX si lo configuras)
 ```
 
-No external dependencies. With the 7B model on CPU it takes about 15-55 s per mail with the model loaded and 40-75 s cold
-(measured on CPU, no GPU).
+Sin dependencias externas. Con el 7B en CPU tarda unos 15-55 s por correo con el modelo cargado y 40-75 s en frío (medido en CPU, sin GPU).
 
-`pruebas/probar_reglas.py` (no model, no network, seconds) checks injection phrases, hidden and visible styles, HTML with
-unclosed tags, real types and ZIP attachments; run it after touching `INYECCION`, `CSS_OCULTO`, `Texto`, `MAGIA`,
-`mirar_ole` or the attachment rules.
+`pruebas/probar_reglas.py` (sin modelo ni red, segundos) comprueba frases de inyección, estilos ocultos y visibles y
+HTML con etiquetas sin cerrar, tipos reales y adjuntos ZIP; pásalo tras tocar `INYECCION`, `CSS_OCULTO`, `Texto`,
+`MAGIA`, `mirar_ole` o las reglas de adjuntos.
 
-`pruebas/probar.sh [model] [output.jsonl]` runs `pruebas/corpus.tsv` (labelled mails with the expected verdict) and flags
-mismatches. The repository only contains the synthetic samples in `pruebas/sinteticos/` (`*.example` or invented
-domains, no personal data); add your own mails to `corpus.tsv` keeping them **out of git**, because real ones contain
-personal data. With a model it takes ~1 min per mail (`PAUSA` seconds of rest between them, 60 by default).
+`pruebas/probar.sh [modelo] [salida.jsonl]` pasa `pruebas/corpus.tsv` (correos etiquetados con el veredicto esperado) y marca
+si coincide. En el repo solo hay los sintéticos de `pruebas/sinteticos/` (dominios `*.example` o inventados, sin datos
+personales); añade tus propios correos a `corpus.tsv` guardándolos **fuera de git**, porque los reales tienen datos
+personales. Con modelo tarda ~1 min por correo (`PAUSA` segundos de descanso entre ellos, 60 por defecto).
 
-## Choosing a model
+## Elegir modelo
 
-The model gives a second opinion; the deterministic indicators decide most verdicts. A comparison on the 23 synthetic
-mails of `pruebas/corpus.tsv` (same code, only `--modelo` changes; enrichment on) gives a reference point:
+El modelo da una segunda opinión; los indicadores deterministas deciden la mayoría de los veredictos. Una comparación
+sobre los 23 correos sintéticos de `pruebas/corpus.tsv` (mismo código, solo cambia `--modelo`; con enriquecimiento) da un
+punto de referencia:
 
-| Model | Within the expected verdict | Model time per mail (median / max) | Whole corpus |
+| Modelo | Dentro del veredicto esperado | Tiempo del modelo por correo (mediana / máx) | Corpus entero |
 |---|---|---|---|
-| `qwen2.5:7b` (default) | 23 / 23 | 64 s / 143 s | 28 min |
+| `qwen2.5:7b` (por defecto) | 23 / 23 | 64 s / 143 s | 28 min |
 | `qwen2.5:14b` | 22 / 23 | 145 s / 298 s | 59 min |
 
-Measured on a 6-core Xeon E5-2620 v1 (AVX only, DDR3-1067, no GPU) in a container with 10 vCPU and 28 GB of RAM; times
-scale with your hardware, and a GPU changes them a lot.
+Medido en un Xeon E5-2620 v1 de 6 núcleos (solo AVX, DDR3-1067, sin GPU) con un contenedor de 10 vCPU y 28 GB de RAM; los
+tiempos escalan con tu equipo y una GPU los cambia mucho.
 
-- **Verdict and risk differed in 6 of 23 mails.** The 14b classifies better the mails the 7b called "legitimate" while
-  they were malicious (hidden-text injection, macro and encrypted attachments, a bait mail), but the final verdict
-  barely moved because the technical indicators already got them right.
-- **The larger model is not automatically better.** The 14b was the only one to miss: it scored a bait mail without a
-  link as malicious (65) where the 7b said suspicious (50), and the expected answer was anything below malicious.
-- **It costs about 2.3 times the time and 2 times the memory** (the 14b needs ~9 GB of free RAM next to the system).
-- This corpus is synthetic and made to exercise the rules, not to fool the model. Do not read it as a ranking: it is a
-  starting point. To compare on your own mail, run `pruebas/probar.sh <model> out.jsonl` once per model and diff the
-  results; keep your real corpus **out of git**. To switch: `--modelo` in `analizar_correo.py`, or
-  `ANALISTA_CORREO_MODELO` (see `contrib/despliegue/README.md` for the timer).
-- Rule of thumb: start with the default; try a larger one if you have memory to spare, mails where the text matters more
-  than the headers, or a GPU; use `qwen2.5:3b` only when memory is tight (not measured here).
+- **Veredicto y riesgo distintos en 6 de 23 correos.** El 14b clasifica mejor los que el 7b llamaba «legítimos» siendo
+  maliciosos (inyección con texto oculto, adjuntos con macros o cifrados, un cebo), pero el veredicto final casi no se
+  movió, porque los indicadores técnicos ya acertaban.
+- **El modelo mayor no es mejor sin más.** El 14b fue el único que falló: puntuó como malicioso (65) un cebo sin enlace
+  donde el 7b dijo sospechoso (50), y lo esperado era cualquier cosa por debajo de malicioso.
+- **Cuesta unas 2,3 veces el tiempo y el doble de memoria** (el 14b necesita ~9 GB libres además del sistema).
+- Este corpus es sintético y está hecho para ejercitar las reglas, no para engañar al modelo. No es un ranking: es un
+  punto de partida. Para comparar con tu correo, pasa `pruebas/probar.sh <modelo> salida.jsonl` una vez por modelo y
+  compara los resultados; guarda tu corpus real **fuera de git**. Para cambiar: `--modelo` en `analizar_correo.py`, o
+  `ANALISTA_CORREO_MODELO` (el temporizador, en `contrib/despliegue/README.md`).
+- Regla práctica: empieza con el de por defecto; prueba uno mayor si te sobra memoria, tus correos dependen más del texto
+  que de las cabeceras, o tienes GPU; usa `qwen2.5:3b` solo si vas justo de memoria (no medido aquí).
 
-## Using the output
+## Qué hacer con la salida
 
-The analyzer is built so its results can feed the tools you may already run. Every analysis leaves four kinds of output:
-the `analisis.json` attached to each reply (verdict, risk, indicators and `iocs`), the SQLite database (`analisis.db`),
-and two optional exports in `contrib/`: CSV lists of malicious IPs and domains, and InfluxDB line-protocol metrics.
+El analizador está pensado para alimentar las herramientas que ya tengas. Cada análisis deja cuatro tipos de salida: el
+`analisis.json` adjunto a cada respuesta (veredicto, riesgo, indicadores e `iocs`), la base SQLite (`analisis.db`) y dos
+exportaciones opcionales en `contrib/`: listas CSV de IPs y dominios maliciosos y métricas en line protocol de InfluxDB.
 
-| Goal | How | Where |
+| Objetivo | Cómo | Dónde |
 |---|---|---|
-| Detect it on your network (Graylog or any SIEM) | The CSV lists (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) are lookup tables: alert when a client of your LAN resolves or contacts an IP or domain that already arrived by mail. | `contrib/README.md`, "Exporting IOCs" |
-| Dashboard (Grafana) | `metricas.py` writes InfluxDB line protocol and Telegraf ships it. Measurements: `correo_dia` (verdicts and mean risk per day), `correo_indicador` (what triggered: headers, body, attachments, URLs, enrichment), `correo_envios` (forwards and reused analyses), `correo_modelo` (model latency), `correo_autenticacion` (SPF/DKIM/DMARC results), `correo_total` and `correo_campana` (campaigns). An importable dashboard is in `contrib/grafana-telegraf/dashboard.json`. | `contrib/README.md`, "Metrics for Grafana" |
-| Threat-intelligence platform (MISP) | Read the same CSV lists (or the `iocs` table) and create one MISP event per campaign, with the IPs and domains as attributes. A short PyMISP example is in `contrib/README.md`. | `contrib/README.md`, "MISP" |
-| Block at the DNS (AdGuard Home, Pi-hole…) | Turn the domain CSV into a blocklist. Review it first: it is a sample of what reached your own mailbox, not a curated feed. | your DNS filter |
-| Ad-hoc questions | The SQL queries of [Mailbox mode](docs/mailbox-mode.md#database-and-duplicates) (shared infrastructure by ASN, campaigns by root domain, template or kit). | `analisis.db` |
+| Detectarlo en tu red (Graylog o cualquier SIEM) | Las listas CSV (`correo_iocs_ip.csv`, `correo_iocs_dominio.csv`) sirven de lookup table: alerta cuando un cliente de tu LAN resuelve o contacta una IP o un dominio que ya llegó por correo. | `contrib/README.md`, «Exportación de IOCs» |
+| Panel (Grafana) | `metricas.py` escribe line protocol de InfluxDB y Telegraf lo recoge. Medidas: `correo_dia` (veredictos y riesgo medio por día), `correo_indicador` (qué lo disparó: cabeceras, cuerpo, adjuntos, URLs, enriquecimiento), `correo_envios` (reenvíos y análisis reutilizados), `correo_modelo` (latencia del modelo), `correo_autenticacion` (resultados de SPF/DKIM/DMARC), `correo_total` y `correo_campana` (campañas). Hay un panel importable en `contrib/grafana-telegraf/dashboard.json`. | `contrib/README.md`, «Métricas para Grafana» |
+| Plataforma de inteligencia de amenazas (MISP) | Lee esas mismas listas CSV (o la tabla `iocs`) y crea un evento de MISP por campaña, con las IPs y dominios como atributos. En `contrib/README.md` hay un ejemplo corto con PyMISP. | `contrib/README.md`, «MISP» |
+| Bloquear en el DNS (AdGuard Home, Pi-hole…) | Convierte el CSV de dominios en una lista de bloqueo. Revísala antes: es una muestra de lo que llegó a tu buzón, no un feed curado. | tu filtro DNS |
+| Preguntas puntuales | Las consultas SQL de [Modo buzón](docs/mailbox-mode.md#base-de-datos-y-duplicados) (infraestructura compartida por ASN, campañas por dominio raíz, plantilla o kit). | `analisis.db` |
 
-![Grafana dashboard: totals and daily charts](docs/img/dashboard-grafana-resumen.png)
-*The dashboard in `contrib/grafana-telegraf/dashboard.json`: totals by verdict, new mails per day, risk, indicators by origin, forwards and model latency. Real data from the author's mailbox; panel texts are in Spanish, like the program's output.*
+![Panel de Grafana: totales y gráficas por día](docs/img/dashboard-grafana-resumen.png)
+*El panel de `contrib/grafana-telegraf/dashboard.json`: totales por veredicto, correos nuevos por día, riesgo, indicadores por origen, reenvíos y latencia del modelo. Datos reales del buzón del autor.*
 
-![Grafana dashboard: authentication and campaigns](docs/img/dashboard-grafana-detalle.png)
-*SPF/DKIM/DMARC results, and campaigns (the same text or hosting link sent from different senders).*
+![Panel de Grafana: autenticación y campañas](docs/img/dashboard-grafana-detalle.png)
+*Resultados de SPF/DKIM/DMARC y campañas (el mismo texto o enlace de alojamiento desde remitentes distintos).*
 
-Things worth knowing before you automate on top of it:
-- The CSV lists only carry malicious verdicts, drop shared infrastructure (webmail, shorteners, sending platforms), your
-  own domains and the popular domains of the Tranco ranking, and cap the age of what they export (90 days for IPs, 180
-  for domains). Even so they are one model's opinion on a few mails: keep a human in the loop before blocking.
-- A shared-hosting link is an IOC as a full URL, not as a domain; the exporter already keeps that distinction.
-- `info` in the CSV only holds your own data (risk, campaign, date, number of mails), never the subject or the text,
-  because the attacker writes those.
-- Give each integration its own credentials with the least privilege it needs (a Publisher-only MISP key, a write-only
-  InfluxDB token) and keep them in files with mode 600, not on the command line.
+Qué conviene saber antes de automatizar encima:
+- Las listas CSV solo llevan veredictos maliciosos, quitan la infraestructura compartida (webmail, acortadores,
+  plataformas de envío), tus dominios y los populares del ranking Tranco, y limitan la edad de lo que exportan (90 días
+  las IPs, 180 los dominios). Aun así son la opinión de un modelo sobre unos pocos correos: deja a una persona en el
+  circuito antes de bloquear.
+- Un enlace a alojamiento compartido es un IOC como URL completa, no como dominio; el exportador ya mantiene esa
+  distinción.
+- `info` en el CSV solo lleva datos propios (riesgo, campaña, fecha, número de correos), nunca el asunto ni el texto,
+  porque los escribe el atacante.
+- Da a cada integración sus propias credenciales con el mínimo privilegio (una clave de MISP solo Publisher, un token de
+  InfluxDB solo de escritura) y guárdalas en ficheros con permisos 600, no en la línea de comandos.
 
-## Documentation
+## Documentación
 
-The detail lives in `docs/` (each page has an English and a Castellano version):
-- [How it works](docs/how-it-works.md): what the analyzer checks, how the score is built, how to forward a mail.
-- [Mailbox mode](docs/mailbox-mode.md): `buzon.py`, configuration, the database, duplicates and useful SQL queries.
-- [Enrichment](docs/enrichment.md): reputation lookups, weights, OTX, abuse.ch, Tranco.
-- [Detection rules of 1.15](docs/detection-rules.md): the R1-R7 table and its limits.
-- [Automatic deployment](contrib/despliegue/README.md), [optional extras](contrib/README.md), [security policy](SECURITY.md) and [forwarding guide](guia-reenvio.md) (Spanish).
+El detalle está en `docs/` (cada página tiene versión en inglés y en castellano):
+- [Cómo funciona](docs/how-it-works.md): qué comprueba el analizador, cómo se construye la puntuación, cómo reenviar un correo.
+- [Modo buzón](docs/mailbox-mode.md): `buzon.py`, configuración, la base de datos, duplicados y consultas SQL útiles.
+- [Enriquecimiento](docs/enrichment.md): consultas de reputación, pesos, OTX, abuse.ch, Tranco.
+- [Reglas de detección de la 1.15](docs/detection-rules.md): la tabla R1-R7 y sus límites.
+- [Despliegue automático](contrib/despliegue/README.md), [extras opcionales](contrib/README.md), [política de seguridad](SECURITY.md) y [guía de reenvío](guia-reenvio.md).

@@ -1,89 +1,110 @@
-# How it works
+# Cómo funciona
 
-[← README](../README.md) · **English** · [Castellano](how-it-works.es.md)
+[← README](../README.md) · [English](how-it-works.en.md) · **Castellano**
 
-1. **Takes the .eml apart** (Python standard library): headers, text (HTML to text, fixes mojibake and invisible padding),
-   links and attachments (with their sha256).
-2. **Deterministic technical indicators**, with points:
-   - SPF, DKIM and DMARC from the most recent `Authentication-Results`: the one added by the last MX, the only reliable
-     one. Since 1.8.1 all consecutive ones above the next `Received` are read together, because some providers spread
-     dmarc, spf and dkim over three headers.
-   - Return-Path, Reply-To and DKIM signature of a different domain than the From; display name with another address;
-     domains that look randomly generated (series of 5+ digits, 5+ consonants in a row, almost no vowels) or with 3+
-     subdomain levels; frequently abused TLDs. Since 1.7, the Return-Path and DKIM signature of a sending platform
-     (`PROVEEDORES_ENVIO`: Mailchimp, SendGrid…) do not count: there they are normal.
-   - URLs: IP address, punycode, shorteners, generic hosting (`storage.googleapis.com`…), link text that does not match
-     the destination.
-   - Click tracking of sending platforms (since 1.9, `SEGUIMIENTO`: `awstrack.me` of Amazon SES, `rs6.net` of Constant
-     Contact, `list-manage.com` of Mailchimp, SendGrid, Brevo, HubSpot…): +5 once per mail, because it is legitimate but
-     hides the real destination. Those links do not also score for random subdomain or mismatched text.
-   - Attachments by name: executables, macros, containers/HTML and double extensions.
-   - Attachments from the inside (since 1.12), in memory, without writing or executing anything:
-     - Real type from the first bytes (`MAGIA`): a Windows executable (MZ with a PE header), ELF or `.lnk` shortcut under
-       another name adds +60 and marks the attachment dangerous; a ZIP, RAR, 7z, CAB, gzip or ISO named `.pdf`, `.jpg`,
-       `.doc`… adds +30. A `.docx` or `.xlsx` is a ZIP and does not count.
-     - ZIP index (also docx, xlsx, jar) read with `zipfile` over the bytes: only the index is read, nothing is
-       decompressed, so a ZIP bomb is harmless; at most 1000 names are kept. An executable inside adds +60 and marks the
-       attachment dangerous; macros (`vbaProject.bin` in a `.docx`, or a `.docm` inside) +40, also dangerous; a container
-       or HTML inside +20; an encrypted ZIP +30 (the password usually travels in the body so the antivirus cannot see
-       it); an unreadable ZIP +10. Inner names go to the report without control or format characters (U+202E:
-       `fac<U+202E>txt.exe` reads `facexe.txt`), cut from the front to keep the extension, and without the trailing "."
-       and " " that Windows ignores. The attachment name is cleaned too.
-     - A readable, unencrypted ZIP with only documents or images (`EXT_SIN_MACROS`: no `.doc`, `.xls`, `.ppt` or `.rtf`,
-       which can carry macros that are not inspected) adds +10 instead of the +30 for a container.
-     - The newest checks are only tested with synthetic samples (`pruebas/generar_adjuntos.py`, inert contents). Not
-       inspected: URLs or JavaScript inside PDF, RAR/7z/ISO contents, ZIP inside ZIP.
-     - Legacy Office (OLE2: `.doc`, `.xls`, `.ppt`; since 1.13) with a minimal standard-library reader (`mirar_ole`)
-       that only follows sector chains of the file itself, with loops cut, each FAT sector read once and at most 32 MB
-       (otherwise a hostile file multiplies the FAT until memory runs out):
-       - VBA macros from the directory (`Macros/VBA` in Word, `_VBA_PROJECT_CUR` in Excel): +40, dangerous;
-       - Excel 4.0 macro sheets (XLM, macro-type `BOUNDSHEET` in the `Workbook` stream), the classic route without VBA:
-         +40, dangerous; the text says whether the sheet is hidden;
-       - password-encrypted `.docx`/`.xlsx` (wrapped in an OLE with `EncryptedPackage`): +30;
-       - Excel with `FILEPASS`: +15, because a workbook marked "read-only recommended" also carries it and opens without a key;
-       - unreadable OLE document: +10. This is the natural evasion route, because Office accepts files this reader
-         rejects; the indicator stays in the stored analysis.
-       Tested with synthetic samples from `pruebas/generar_adjuntos.py`, cross-checked with `olefile` 0.47 (outside the
-       project) and with 6000 corrupted files (none hangs the analysis); a hostile 24.6 MB DIFAT takes 0.21 s with at most
-       137 MB. Not inspected: PowerPoint 97 VBA (in another stream), Word encrypted with the old read password, macros
-       inside a ZIP.
-   - Text addressed to the analyzer rather than to the recipient (since 1.11, `INYECCION`, +30), in Spanish, English,
-     Portuguese, French, German and Italian: "ignore the instructions", "note to the system/model…", "classify this mail
-     as legitimate", "its risk is 0" and the `<<<`/`CORREO>>>` delimiters. 21 injection phrases and 19 similar legitimate
-     ones pass without failures. Possible false positive: a legitimate mail quoting `<<<` (a diff, a quote) adds +30.
-   - Hidden text after the visible content (since 1.11, +15, any language): ≥ 80 hidden characters (`display:none`,
-     `font-size:0`, `opacity:0`, `max-height:0`, `mso-hide`…) after visible text, or ≥ 20 hidden pieces of 1-2 characters
-     (split words). The preview line comes before everything visible and does not count; tracking pixels are images and
-     do not count either. The style has to end in zero: `font-size:0.9em` or `opacity:0.8` are visible. The hidden text
-     does not reach the model, but it does reach the fingerprint, the campaign template and `INYECCION`. With this
-     indicator or the injection one, the model can no longer halve the technical score. Not detected: text in the
-     background colour, `text-indent:-9999px`, off-screen `position:absolute`, `font-size:1px`; that text still reaches
-     the model.
-3. **Local model** (`qwen2.5:7b` by default, configurable). It receives sender, subject, indicators and body as untrusted
-   data and answers with a forced JSON schema (`format` of the Ollama API): classification, risk, impersonated brand,
-   tactics and explanation. The model has no tools: the worst an injection achieves is changing its answer; the mail's
-   `<<<`/`>>>` are replaced so it cannot close the data block.
-4. **Final risk** = technical + model points (capped at 100), never below 65 if the model says phishing, fraud or
-   malware (15 if it says spam). If the model sees a normal mail with no odd traits, the technical score counts half,
-   unless there is an indicator of 20 points or more. If it says spam, its traits add at most 10. ≥ 80 if there is a
-   dangerous attachment.
-   **Own sender** (since 1.7): DMARC pass, From domain in the Tranco top 100,000, and the origin IP is theirs by PTR or by
-   ASN holder. Then the model's brand-impersonation flag is discarded and the per-class minimum does not apply. PTR and
-   DMARC alone are not enough: an attacker sets them up on a VPS with their own domain; popularity they cannot fake.
-5. **IOCs** (`iocs` in the JSON): extracted, never visited. The IP that delivered the mail to the MX that signs the
-   `Authentication-Results` (the only reliable one; `aproximada` if that MX is not recognised), domains with their root
-   and role (from, return_path, reply_to, dkim, url), full URLs, addresses and attachment sha256. `compartido` marks
-   webmail, social networks, generic hosting, shorteners and IPs of sending providers: there the IOC is the URL or the
-   address, not the domain or the IP.
-   Verdict: `< 30` legitimate, `30-64` suspicious, `≥ 65` malicious. If the model fails, the technical score stays with
-   a warning.
+1. **Desmonta el .eml** (Python, biblioteca estándar): cabeceras, texto (HTML a texto, arregla el mojibake y
+   el relleno invisible), enlaces y adjuntos (con su sha256).
+2. **Indicadores técnicos deterministas**, con puntos:
+   - SPF, DKIM y DMARC del `Authentication-Results` más reciente. Es el que añade el último MX, el único fiable.
+     Desde la 1.8.1 se leen juntos todos los seguidos de arriba hasta el siguiente `Received`: algún proveedor reparte
+     dmarc, spf y dkim en tres cabeceras y antes salía «sin firma DKIM» en todo lo reenviado desde allí.
+   - Return-Path, Reply-To y firma DKIM de otro dominio que el From. Nombre visible con otra dirección.
+     Dominios que parecen generados al azar (serie de 5+ cifras, 5+ consonantes seguidas o casi sin vocales; el
+     mensaje dice cuál) o con 3+ niveles de subdominio, y TLD de abuso frecuente. Desde la 1.7, el Return-Path y
+     la firma DKIM de una plataforma de envío (`PROVEEDORES_ENVIO`: Mailchimp, SendGrid…) no cuentan: ahí son lo
+     normal.
+   - URLs: IP, punycode, acortadores, alojamiento genérico (`storage.googleapis.com`…), texto del enlace
+     que no coincide con el destino.
+   - Seguimiento de clics de plataformas de envío (desde la 1.9, `SEGUIMIENTO`: `awstrack.me` de Amazon SES,
+     `rs6.net` de Constant Contact, `list-manage.com` de Mailchimp, SendGrid, Brevo, HubSpot…): +5 una sola vez
+     por correo, porque es legítimo pero oculta el destino real. Esos enlaces no puntúan además por subdominio
+     aleatorio ni por texto que no coincide, y su dominio con una marca (`amazonses.com`) en el Return-Path
+     tampoco. Constant Contact se trata además como plataforma de envío (su IP de origen cuenta como compartida).
+   - Adjuntos ejecutables, con macros, contenedores/HTML y dobles extensiones, por el nombre.
+   - Adjuntos por dentro (desde la 1.12), en memoria, sin escribirlos ni ejecutar nada:
+     - Tipo real por los primeros bytes (`MAGIA`): un ejecutable de Windows (MZ con cabecera PE; un texto que
+       empiece por «MZ» no cuenta), ELF o acceso directo `.lnk` con otro nombre suma +60 y deja el adjunto en
+       peligroso; un ZIP, RAR, 7z, CAB, gzip o ISO llamado `.pdf`, `.jpg`, `.doc`… (`EXT_DOCUMENTO`) suma +30. Un
+       `.docx` o `.xlsx` es un ZIP y no cuenta.
+     - Índice del ZIP (también docx, xlsx, jar), con `zipfile` sobre los bytes: solo se lee el índice, no se
+       descomprime nada, así que una bomba ZIP no hace daño; se guardan como mucho 1000 nombres. Un ejecutable dentro
+       suma +60 y deja el adjunto en peligroso; macros (`vbaProject.bin` en un `.docx`, o un `.docm` dentro) +40,
+       también peligroso; un contenedor o HTML dentro +20; el ZIP cifrado +30 (la contraseña suele ir en el cuerpo
+       para que no lo vea el antivirus); un ZIP ilegible +10. Los nombres de dentro van al informe sin caracteres de
+       control ni de formato (el U+202E: `fac<U+202E>txt.exe` se lee `facexe.txt`), cortados por delante para no
+       perder la extensión, y sin los «.» y « » finales que Windows ignora (`factura.exe.`). El nombre del adjunto
+       también se limpia.
+     - Un ZIP legible, sin cifrar y con solo documentos o imágenes (`EXT_SIN_MACROS`: sin `.doc`, `.xls`, `.ppt` ni
+       `.rtf`, que pueden llevar macros que no se miran) suma +10 en lugar de los +30 de contenedor. Antes,
+       todo correo con un ZIP salía sospechoso: los +30 además impedían la rebaja a la mitad.
+     - Lo nuevo solo está probado con sintéticos (`pruebas/generar_adjuntos.py`, contenidos inertes). No mira: URLs o JavaScript dentro de PDF,
+       RAR/7z/ISO por dentro ni ZIP dentro de ZIP.
+     - Office antiguo (OLE2: `.doc`, `.xls`, `.ppt`; desde la 1.13), con un lector mínimo de la biblioteca estándar
+       (`mirar_ole`) que solo sigue cadenas de sectores del propio fichero, con bucles cortados, cada sector de FAT
+       leído una sola vez y como mucho 32 MB (si no, un fichero hostil multiplica la FAT hasta agotar la memoria):
+       - macros VBA por el directorio (`Macros/VBA` de Word, `_VBA_PROJECT_CUR` de Excel): +40, peligroso;
+       - hojas de macros de Excel 4.0 (XLM, `BOUNDSHEET` de tipo macro en el flujo `Workbook`), la vía clásica sin VBA:
+         +40, peligroso; el texto dice si la hoja está oculta;
+       - `.docx`/`.xlsx` cifrado con contraseña (metido en un OLE con `EncryptedPackage`): +30;
+       - Excel con `FILEPASS`: +15, porque también lo lleva un libro con «solo lectura recomendada», que abre sin clave;
+       - documento OLE ilegible: +10. Es la vía de evasión natural, porque Office acepta ficheros que este lector
+         rechaza (corte del miniflujo distinto de 4096, DIFAT incoherente); el indicador queda en el análisis guardado.
+       Un `Workbook` roto no borra lo visto en el directorio (VBA, cifrado).
+       Una extensión de macros (`.xlsm`…) ya suma +40 por el nombre y no se cuenta dos veces. Probado con sintéticos
+       generados por `pruebas/generar_adjuntos.py`, contrastados con `olefile` 0.47 (fuera del proyecto), y con 6000
+       ficheros corrompidos (ninguno cuelga el análisis); 6,6 MB en 0,01 s, y una DIFAT hostil de 24,6 MB (48 000
+       sectores apuntando al mismo sector de FAT) en 0,21 s con 137 MB como máximo. No mira: VBA de
+       PowerPoint 97 (va dentro de otro flujo), Word cifrado con la contraseña de lectura antigua ni macros dentro de
+       un ZIP.
+   - Texto dirigido al analizador y no al destinatario (desde la 1.11, `INYECCION`, +30), en castellano, inglés,
+     portugués, francés, alemán e italiano: «ignora las instrucciones», «nota para el sistema/modelo…», «clasifica
+     este correo como legítimo», «su riesgo es 0» y los delimitadores `<<<`/`CORREO>>>`. 21 frases de inyección y
+     19 legítimas parecidas («ignora este mensaje si…», «Das Risiko ist 0,5 %») sin fallos. En un corpus propio de prueba solo salta en los
+     sintéticos de inyección; con la 1.10, `inyeccion-oculta.eml` (texto oculto en el HTML) salía legítimo 22.
+     Falso positivo posible: un correo legítimo que cite `<<<` (un diff, una cita) suma +30.
+   - Texto oculto tras el contenido visible (desde la 1.11, +15, cualquier idioma): ≥ 80 caracteres ocultos
+     (`display:none`, `font-size:0`, `opacity:0`, `max-height:0`, `mso-hide`…) después de texto visible, o ≥ 20
+     trozos ocultos de 1-2 caracteres (palabras partidas). La línea de vista previa va antes de todo lo visible y no
+     cuenta; los píxeles de seguimiento son imágenes y tampoco. El estilo tiene que acabar en el cero:
+     `font-size:0.9em` u `opacity:0.8` son visibles. Las etiquetas `p`, `li`, `td`, `th` y `tr` sin cerrar se cierran
+     al abrir otra igual; si aun así no queda nada visible en todo el correo (plantillas que esconden la versión de
+     móvil o de escritorio), no se mira. El texto oculto no llega al modelo (en los correos legítimos medidos solo
+     pierde la línea de vista previa, 7-11 palabras), pero sí a la huella, a la plantilla de campaña y a `INYECCION`.
+     En un corpus propio, el texto oculto tras lo visible apareció sobre todo en correos maliciosos
+     (relleno de miles de caracteres, frases sueltas de cientos); un legítimo con 68 caracteres quedó por debajo del
+     umbral. Con este indicador o con el de inyección, el modelo ya no puede rebajar el técnico a la mitad.
+     No detecta: letra del color del fondo, `text-indent:-9999px`, `position:absolute` fuera de pantalla ni
+     `font-size:1px`; ese texto sigue llegando al modelo. Un `<span>`, `<font>` o `<a>` oculto sin cerrar esconde lo
+     que viene detrás (solo se vuelve a mirar todo si no queda nada visible).
+3. **Modelo local** (`qwen2.5:7b` por defecto). Recibe remitente, asunto, indicadores y cuerpo como datos no
+   fiables y responde con un esquema JSON forzado (`format` de la API de Ollama): clasificación, riesgo,
+   marca suplantada, tácticas y explicación. El modelo no tiene herramientas: lo peor que consigue una inyección es
+   cambiar su respuesta; los `<<<`/`>>>` del correo se sustituyen para que no pueda cerrar el bloque de datos.
+4. **Riesgo final** = técnico + puntos del modelo (tope 100), y nunca menos de 65 si el modelo dice phishing,
+   fraude o malware (15 si dice spam). Si el modelo ve un correo normal sin rasgos raros, el técnico pesa la mitad,
+   salvo con un indicador de 20 puntos o más (desde la 1.11: si no, un correo que convence al modelo se rebaja solo).
+   Si dice spam, sus rasgos suman como mucho 10, lo mismo que la publicidad sola (desde la 1.10: los boletines
+   legítimos con «plazas limitadas» o «descuento» pasaban de 30 solo por el modelo).
+   ≥ 80 si hay un adjunto peligroso.
+   **Remitente propio** (desde la 1.7): DMARC pass, dominio del From en el top 100.000 de Tranco, y la IP de origen
+   es suya por PTR o por el titular del ASN (`communications.paypal.com` desde AS17012 PayPal). Entonces se
+   descarta el `suplanta_marca` del modelo (la pregunta es «se presenta como una marca», cierto en todo correo de
+   la marca) y no se aplica el mínimo por clase. No basta con PTR y DMARC: un atacante los monta en un VPS con su
+   dominio; la popularidad no.
+5. **IOCs** (`iocs` en el JSON): se extraen, nunca se visitan. IP que entregó el correo al MX que firma el
+   `Authentication-Results` (la única fiable; `aproximada` si no se reconoce ese MX), dominios con su raíz y su
+   papel (from, return_path, reply_to, dkim, url), URLs completas, direcciones y sha256 de adjuntos.
+   `compartido` marca webmail, redes sociales, alojamiento genérico, acortadores y IPs de proveedores de envío:
+   ahí el IOC es la URL o la dirección, no el dominio ni la IP.
+   Veredicto: `< 30` legítimo, `30-64` sospechoso, `≥ 65` malicioso. Si el modelo falla, queda el técnico y
+   un aviso.
 
-## How to send the mail
+## Cómo enviar el correo
 
-- **Forward as attachment** (Gmail: ⋮ → "Forward as attachment"): `adjunto_rfc822` mode, full analysis with the original
-  headers.
-- **Normal forward**: the original headers are lost. With a "Forwarded message" block, From and subject are taken from
-  there (`reenvio_en_linea`). Without it (`--reenviado`, or always from `buzon.py`) only body, links and the Reply-To,
-  which Gmail keeps, are analysed (`reenvio_sin_cabeceras`).
-- **Automatic from Thunderbird** (mail it files as junk, forwarded as attachment by a filter): [`guia-reenvio.md`](../guia-reenvio.md) (Spanish),
-  with alternatives (Apps Script in Gmail, manual forwarding, add-ons).
+- **Reenviar como adjunto** (Gmail: ⋮ → «Reenviar como archivo adjunto»): modo `adjunto_rfc822`, análisis
+  completo con cabeceras originales.
+- **Reenvío normal**: se pierden las cabeceras del original. Con un bloque «Forwarded message» se toman
+  From y asunto de ahí (`reenvio_en_linea`). Sin él (`--reenviado`, o siempre desde `buzon.py`) solo se
+  analizan cuerpo, enlaces y el Reply-To, que Gmail conserva (`reenvio_sin_cabeceras`).
+- **Automático desde Thunderbird** (el correo que clasifica como basura, reenviado como adjunto por un filtro):
+  [`guia-reenvio.md`](../guia-reenvio.md), con las alternativas (Apps Script en Gmail, reenvío manual, complementos).

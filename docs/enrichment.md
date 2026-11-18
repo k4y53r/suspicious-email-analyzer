@@ -1,47 +1,60 @@
-# Enrichment (`enriquecer.py`, since 1.2)
+# Enriquecimiento (`enriquecer.py`, desde la 1.2)
 
-[← README](../README.md) · **English** · [Castellano](enrichment.es.md)
+[← README](../README.md) · [English](enrichment.en.md) · **Castellano**
 
-Queries the non-shared IOCs and adds their points to the technical risk (capped at 40). `buzon.py` always uses it;
-`analizar_correo.py` only with `--enriquecer` (and `probar.sh` passes it). The model does not see these findings. If a
-lookup fails, the analysis goes on without it and the reply says so.
+Consulta los IOCs no compartidos y suma sus puntos al riesgo técnico (tope 40). `buzon.py` lo usa siempre;
+`analizar_correo.py` solo con `--enriquecer` (y `probar.sh` lo pasa). El modelo no ve estos hallazgos. Si una
+consulta falla, el análisis sigue sin ella y la respuesta lo avisa.
 
-Weights: Feodo 40, DROP 30, OTX domain 25, OTX IP 20, domain younger than 30 days 20, Tor 15, younger than one year 10,
-no longer registered 10. A domain younger than 24 h (since 1.5) also raises the final risk to at least 80, and one younger
-than 48 h to 60 (suspicious): almost no legitimate sender writes from a freshly registered domain.
+Pesos: Feodo 40, DROP 30, OTX dominio 25, OTX IP 20, dominio de menos de 30 días 20, Tor 15, de menos de un año
+10, ya no registrado 10. Un dominio de menos de 24 h (desde la 1.5) lleva además el riesgo final a 80 como mínimo,
+y uno de menos de 48 h a 60 (sospechoso): casi nadie legítimo escribe con un dominio recién registrado.
 
-Popular domains (since 1.7): those in the Tranco top 100,000 (`~/.local/state/analista-correo/listas/tranco.txt`, refreshed weekly) are not looked
-up in OTX, abuse.ch or RDAP and are reported as `populares`; OTX and abuse.ch put popular domains (big payment or sending
-platforms) into pulses for any mention, which made legitimate mails come out malicious. Exception: `ANFITRIONES_LIBRES`
-(duckdns.org, ngrok, blogspot…), where anyone can create subdomains. Trade-off: a link to a compromised popular site does
-not add points through enrichment.
+Dominios populares (desde la 1.7): los del top 100.000 de Tranco (`ESTADO/listas/tranco.txt`, una vez por semana)
+no se consultan en OTX, abuse.ch ni RDAP, y salen en `populares`. OTX y abuse.ch meten dominios populares
+(grandes plataformas de pago o de envío) en pulses por cualquier mención, y eso hacía salir maliciosos correos
+legítimos. Excepción: `ANFITRIONES_LIBRES` (duckdns.org, ngrok, blogspot…), donde cualquiera crea subdominios.
+Contrapartida: un enlace a una web popular comprometida no suma por enriquecimiento.
 
-Origin-IP infrastructure (non-shared, since 1.6): **ASN and prefix** through Team Cymru's DNS (`dig`, no key), always shown
-as an informational indicator (0 points) and scoring only with your own history (same prefix already seen in at least 2
-distinct malicious mails in 90 days and at least half of its mails: +15; otherwise the same with the ASN, +10; it feeds
-back, so the weight is low and there is no minimum). **PTR**: the rDNS noted by the MX in `Received`, else a fresh `dig -x`;
-a well-known brand in the PTR with an ASN whose holder does not name it, +25; generic provider PTR (`vps-<hex>`, the IP
-written in the name) +10; no PTR +10. **PTR alias** (since 1.8, 0 points): if the PTR is a CNAME to another domain, it is
-reported as an informational indicator and as an `alias_ptr` node.
+Infraestructura de la IP de origen no compartida (desde la 1.6):
+- **ASN y prefijo** por el DNS de Team Cymru (`dig`, sin clave). Siempre sale como indicador informativo (0 puntos)
+  con ASN, titular, prefijo, país y PTR. Puntúa solo con historial propio: si el mismo prefijo ya ha dado al menos 2
+  correos maliciosos distintos (por huella) en 90 días y son al menos la mitad de los suyos, +15; si no, lo mismo
+  con el ASN, +10. Un ASN de hosting aloja de todo, por eso no hay lista fija de ASN malos. Ojo: se realimenta (los
+  maliciosos suben el historial), por eso el peso es bajo y sin mínimo.
+- **PTR**: el rDNS que anotó el MX en `Received`; si no lo hay, `dig -x` de ahora. Marca conocida en el PTR con un
+  ASN cuyo titular no la nombra, +25 (p. ej. un PTR con el nombre de una gran empresa en un hosting ajeno; resuelve de
+  ida y vuelta, así que FCrDNS no lo detecta). PTR genérico de proveedor (`vps-<hex>`, la IP escrita en el nombre), +10.
+  Sin PTR, +10.
+- **Alias del PTR** (desde la 1.8, 0 puntos): si el PTR es un CNAME a otro dominio, sale como indicador informativo y
+  como nodo `alias_ptr`. En campañas reales se han visto PTR de webs conocidas con CNAME a dominios ajenos que
+  resuelven a decenas de IPs, entre ellas la de origen.
 
-OTX by levels (since 1.3), from each pulse's name and tags: **severe** (ransomware, RAT, C2/botnet, stealer, loader, Cobalt
-Strike, Emotet…): +40 and final risk of at least 80 if there are 2 severe pulses or 1 from the last 180 days; **medium**
-(phishing, malware, trojan, exploit): +25 domain, +20 IP; **mild** (spam, scam, fraud): +10. The command in
-`ANALISTA_CORREO_OTX_CMD` decides how many pulses and tags it prints.
+OTX por niveles (desde la 1.3), según el nombre y las etiquetas de cada pulse:
+- **grave** (ransomware, RAT, C2/botnet, stealer, loader, Cobalt Strike, Emotet…): +40 y riesgo final de al menos 80,
+  si hay 2 pulses graves o 1 de los últimos 180 días. Una sola y antigua cuenta como media: las IPs de C2 rotan.
+- **medio** (phishing, malware, troyano, exploit): +25 dominio, +20 IP.
+- **leve** (spam, scam, fraude): +10.
+El comando de `ANALISTA_CORREO_OTX_CMD` decide cuántas pulses y etiquetas imprime.
 
-abuse.ch (since 1.4), with the free Auth-Key `ABUSECH_AUTH_KEY` in `buzon.env`; without it, it is skipped: **ThreatFox**
-(origin IP and root domains) and **URLhaus** (the same, plus shared-hosting URLs): if listed and recent (online or within
-180 days), +40 and final risk of at least 80; if old, +25. **MalwareBazaar** (attachment sha256): known sample, +40 and at
-least 80. Only the fact of a hit and a summary are stored, not the response. Non-commercial, low-volume use: their terms
-forbid "high volume" automated access without giving a figure, and they may withdraw the key without notice.
+abuse.ch (desde la 1.4), con la Auth-Key gratuita `ABUSECH_AUTH_KEY` en `buzon.env` ; sin ella se omite:
+- **ThreatFox** (IP de origen y dominios raíz) y **URLhaus** (los mismos, y las URLs de alojamiento compartido sin
+  consulta ni fragmento, que suelen llevar el usuario): si aparece y es reciente (online o de los últimos 180
+  días; ThreatFox solo guarda 6 meses), +40 y riesgo final de al menos 80; si es antiguo, +25.
+- **MalwareBazaar** (sha256 de los adjuntos): muestra conocida, +40 y al menos 80.
+- Solo se guarda si aparece y un resumen, no la respuesta. Uso no comercial y de poco volumen: sus condiciones
+  prohíben el acceso automático de «high volume» sin dar cifra, y pueden retirar la clave sin aviso.
 
-Origin IP also checks the Tor, Feodo (C2) and Spamhaus DROP lists, downloaded to `~/.local/state/analista-correo/listas/`
-once a day, and OTX if it is IPv4. Root domain: OTX and RDAP (registration date). RDAP does not cover `.es` or `.pp.ua`
-and is skipped for private suffixes such as `uk.com`; rdap.org returns 429 after ~10 consecutive queries, hence the 2 s
-pause. Results are cached in `cache_enriquecimiento` (OTX 7 days, RDAP and Cymru 30, PTR and its alias 7); errors are not.
+- **IP de origen**: listas Tor, Feodo (C2) y Spamhaus DROP, descargadas
+  a `~/.local/state/analista-correo/listas/` una vez al día, y OTX si es IPv4.
+- **Dominio raíz**: OTX y RDAP (fecha de alta). RDAP no cubre `.es` ni `.pp.ua`, y se salta en sufijos privados
+  como `uk.com`; rdap.org da 429 con ~10 consultas seguidas, por eso hay 2 s de pausa.
+- **OTX** (opcional, `ANALISTA_CORREO_OTX_CMD`: un comando que imprime las pulses del valor): solo cuentan las pulses que hablan de amenazas por nombre o
+  etiquetas. Muchas otras son volcados de URLscan o listas de rastreo con dominios legítimos.
+- Los resultados se guardan en `cache_enriquecimiento` (OTX 7 días, RDAP y Cymru 30, PTR y su alias 7); los errores no.
 
 ```
-python3 enriquecer.py --simular        # what would change in stored analyses, without touching them
-python3 enriquecer.py correo.eml       # enrich an .eml without the model
-python3 enriquecer.py --rellenar-infra # ASN, prefix and PTR for stored analyses that lack them
+python3 enriquecer.py --simular        # qué cambiaría en los análisis guardados, sin tocarlos
+python3 enriquecer.py correo.eml       # enriquece un .eml sin modelo
+python3 enriquecer.py --rellenar-infra # ASN, prefijo y PTR de los análisis guardados que no los tienen
 ```
