@@ -11,7 +11,7 @@ set -Eeuo pipefail
 VMID=""; NOMBRE="analista-correo"; ALMACEN="local-lvm"; PLANTILLAS="local"; PUENTE="vmbr0"
 NUCLEOS=4; MEMORIA=8192; DISCO=24; FUENTE=""; TGZ=""; ENV_ORIGEN=""; MODELO="qwen2.5:7b"; EJECUTAR=0; ONBOOT=0; CREADO=0
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-trap 'rc=$?; [[ -z "$TGZ" ]] || rm -f "$TGZ"; (( CREADO )) && [[ -n "$ENV_ORIGEN" ]] && pct exec "$VMID" -- rm -f /root/buzon.env >/dev/null 2>&1; (( rc == 0 || ! CREADO )) || info "falló con el CT $VMID creado; para deshacer: pct stop $VMID; pct destroy $VMID --purge"; info "fin rc=$rc"' EXIT
+trap 'rc=$?; [[ -z "$TGZ" ]] || rm -f "$TGZ"; if (( CREADO )); then pct exec "$VMID" -- rm -f /root/buzon.env /root/instalar.sh /root/analista-correo.tgz >/dev/null 2>&1 || true; fi; (( rc == 0 || ! CREADO )) || info "falló con el CT $VMID creado; para deshacer: pct stop $VMID; pct destroy $VMID --purge"; info "fin rc=$rc"' EXIT
 
 die()  { echo "ERROR: $*" >&2; exit 1; }
 info() { echo "$(date -u +%FT%TZ) >> $*"; }
@@ -48,7 +48,8 @@ if [[ -z "$FUENTE" ]]; then       # por defecto, este mismo repositorio (sin .gi
     TGZ="$(mktemp)"
     # Con git, solo lo versionado; sin git o sin acceso al repositorio, todo salvo lo que .gitignore suele dejar fuera.
     if command -v git >/dev/null && git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-       && tar czf "$TGZ" --null --transform 's,^,analista-correo/,' -C "$REPO" -T <(git -C "$REPO" ls-files -z) 2>/dev/null; then :
+       && tar czf "$TGZ" --null --transform 's,^,analista-correo/,' -C "$REPO" -T <(git -C "$REPO" ls-files -z) 2>/dev/null \
+       && tar -xzOf "$TGZ" analista-correo/analizar_correo.py >/dev/null 2>&1; then :   # si falla (p. ej. un fichero versionado borrado, o el analizador sin versionar), se empaqueta todo con exclusiones
     else
       tar czf "$TGZ" --exclude=./.git --exclude='*.env' --exclude='*.env.[!e]*' --exclude='*.prev' --exclude='*.antes' \
         --exclude=__pycache__ --exclude=./.venv --exclude=./resultados --transform 's,^\.,analista-correo,' -C "$REPO" .
@@ -100,7 +101,6 @@ if [[ -n "$ENV_ORIGEN" ]]; then hacer pct push "$VMID" "$ENV_ORIGEN" /root/buzon
 info "instalación dentro del CT (tarda unos 15 minutos: Ollama y el modelo)"
 if (( EJECUTAR )); then
   pct exec "$VMID" -- /root/instalar.sh "${ARGS[@]}"
-  pct exec "$VMID" -- rm -f /root/instalar.sh /root/analista-correo.tgz
   info "CT $VMID listo: $(pct exec "$VMID" -- hostname -I 2>/dev/null | cut -d' ' -f1)"
 else info "simularía: pct exec $VMID -- /root/instalar.sh ${ARGS[*]}"; fi
 exit 0
