@@ -240,24 +240,6 @@ def rdap(dom):
     return _consulta_rdap("https://rdap.org/domain/" + dom)
 
 
-def rdap(dom):
-    global _ultima_rdap
-    time.sleep(max(0.0, _ultima_rdap + PAUSA_RDAP - time.time()))
-    _ultima_rdap = time.time()
-    servidores = servidores_rdap()
-    base = servidores.get(dom.rsplit(".", 1)[-1])
-    if servidores and not base:
-        return {"sin_servicio": True}  # el TLD no tiene servidor RDAP en el catálogo de IANA (.es…)
-    if base:
-        try:
-            return _consulta_rdap(base + "domain/" + dom)
-        except urllib.error.HTTPError:
-            raise
-        except OSError:
-            pass  # el registro no responde o su TLS falla: se prueba rdap.org, que redirige al mismo registro
-    return _consulta_rdap("https://rdap.org/domain/" + dom)
-
-
 def edad_alta(alta):
     """Edad del dominio según la fecha RDAP (externa y cacheada); None si falta o no es legible."""
     if not alta:

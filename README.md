@@ -50,6 +50,7 @@ justo de memoria, aunque su licencia (Qwen Research) solo permite investigación
 git clone https://github.com/k4y53r/suspicious-email-analyzer.git && cd suspicious-email-analyzer
 python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # un análisis, sin buzón
 python3 -I pruebas/probar_reglas.py                                    # pruebas sin modelo ni red
+python3 -I pruebas/probar_rdap.py && python3 -I pruebas/probar_ifin.py   # RDAP directo y listas de IFIN, sin red
 ```
 
 Para el modo buzón:
@@ -94,7 +95,7 @@ Sin dependencias de Python (basta la biblioteca estándar); además hacen falta 
 
 `pruebas/probar_reglas.py` (sin modelo ni red, segundos) comprueba frases de inyección, estilos ocultos y visibles y
 HTML con etiquetas sin cerrar, tipos reales y adjuntos ZIP; pásalo tras tocar `INYECCION`, `CSS_OCULTO`, `Texto`,
-`MAGIA`, `mirar_ole` o las reglas de adjuntos.
+`MAGIA`, `mirar_ole` o las reglas de adjuntos. `pruebas/probar_rdap.py` y `pruebas/probar_ifin.py` (sin red) cubren el RDAP directo al registro y las listas de IFIN; pásalos tras tocar `enriquecer.py`.
 
 `pruebas/probar.sh [modelo] [salida.jsonl]` pasa `pruebas/corpus.tsv` (correos etiquetados con el veredicto esperado) y marca
 si coincide. En el repo solo hay los sintéticos de `pruebas/sinteticos/` (dominios `*.example` o inventados, sin datos

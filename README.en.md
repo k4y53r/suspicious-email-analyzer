@@ -53,6 +53,7 @@ mailbox mode, a mail account with IMAP and SMTP.
 git clone https://github.com/k4y53r/suspicious-email-analyzer.git && cd suspicious-email-analyzer
 python3 analizar_correo.py pruebas/sinteticos/malware-adjunto.eml      # one analysis, no mailbox
 python3 -I pruebas/probar_reglas.py                                    # tests, no model and no network
+python3 -I pruebas/probar_rdap.py && python3 -I pruebas/probar_ifin.py   # direct RDAP and IFIN lists, no network
 ```
 
 For mailbox mode:
@@ -105,7 +106,7 @@ No Python dependencies (the standard library is enough); you also need `dig`, `g
 
 `pruebas/probar_reglas.py` (no model, no network, seconds) checks injection phrases, hidden and visible styles, HTML with
 unclosed tags, real types and ZIP attachments; run it after touching `INYECCION`, `CSS_OCULTO`, `Texto`, `MAGIA`,
-`mirar_ole` or the attachment rules.
+`mirar_ole` or the attachment rules. `pruebas/probar_rdap.py` and `pruebas/probar_ifin.py` (no network) cover the direct registry RDAP and the IFIN lists; run them after touching `enriquecer.py`.
 
 `pruebas/probar.sh [model] [output.jsonl]` runs `pruebas/corpus.tsv` (labelled mails with the expected verdict) and flags
 mismatches. The repository only contains the synthetic samples in `pruebas/sinteticos/` (`*.example` or invented

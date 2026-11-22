@@ -1,6 +1,7 @@
 # Cambios
 
 ## Sin publicar
+- Corregido: `enriquecer.py` publicado en `e8c8d12` tenía la función `rdap()` duplicada (idéntica; sin efecto, pero sobraba). README (castellano e inglés): comandos y apartado de pruebas con `probar_rdap.py` y `probar_ifin.py`.
 - `run.sh`: lanzado a mano con opciones (`--uid`…) espera hasta 5 min al lock en lugar de salir sin avisar (el cron sigue saliendo en silencio); `timeout -k 30`; las líneas propias del script con fecha UTC. La documentación del modo buzón dice ahora qué escribe `run.log` (una línea por correo, avisos y errores, no solo errores).
 - `enriquecer.py`: las URLs mal formadas del correo (p. ej. `http://[abc/x`) ya no rompen el enriquecimiento: `partir_url()` sustituye a los `urlsplit` sin proteger (bloque de abuse.ch de alojamiento compartido, redirecciones del RDAP y hosts para IFIN). Pruebas añadidas en `pruebas/probar_rdap.py`.
 - RDAP directo al registro: `rdap()` consulta el servidor RDAP de cada TLD según el catálogo de IANA (semanal, validado) y cae a `rdap.org` si el registro no responde; así no depende de Cloudflare, que algunos operadores bloquean por IP en ciertas franjas (certificado autofirmado ajeno). Un TLD sin servidor en el catálogo se omite. Nunca se baja de https a http en redirecciones. `pruebas/probar_rdap.py` (22 comprobaciones sin red).
