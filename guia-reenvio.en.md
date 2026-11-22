@@ -81,7 +81,7 @@ Thunderbird does not copy filters between accounts: repeat it by hand.
 - Mail that the server (Gmail, for example) already sends to its Spam folder does not go through the inbox or through
   Thunderbird's classifier: this filter does not see it. For that case, see 6.1.
 - The classifier's false positives are forwarded too. They stay on your machine, but the enrichment (if you turn it on)
-  queries their domains and IPs at abuse.ch, public lists and RDAP.
+  queries their domains and IPs at abuse.ch and RDAP (the public lists are only downloaded).
 - Not verified: open bugs with "after classification" filters on Linux and IMAP (bugs 1245157 and 1661989), and a 2021
   support thread about filter forwards that failed on messages with attachments.
 

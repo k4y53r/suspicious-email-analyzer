@@ -5,7 +5,7 @@
 - No abre enlaces. Las URLs y dominios que salen en las respuestas van desactivados (`hxxp`, `[.]`).
 - El texto del correo llega a un modelo local (Ollama). Un correo puede intentar manipularlo (inyección de instrucciones): el programa puntúa esas frases y el texto oculto aparte, y el modelo no puede rebajar los indicadores técnicos fuertes. Aun así, el veredicto es una segunda opinión, no una garantía.
 - `buzon.env` contiene la contraseña del buzón: el programa se niega a arrancar si no tiene permisos 600. Usa una contraseña de aplicación, no la principal.
-- Las consultas de enriquecimiento (abuse.ch, listas públicas, RDAP, OTX opcional) envían a terceros IP y dominios del correo analizado.
+- Las consultas de enriquecimiento (abuse.ch, RDAP al registro de cada TLD o a `rdap.org`, OTX opcional) envían a terceros IP y dominios del correo analizado; las listas públicas (incluidas las de IFIN y el catálogo de IANA) solo se descargan.
 
 ## Cómo informar de una vulnerabilidad
 Abre un aviso de seguridad privado en GitHub (pestaña *Security* → *Report a vulnerability*) o, si no está disponible, un issue **sin** el correo ni datos personales: describe el tipo de fichero y el efecto, y se pide el ejemplo por un canal privado. No publiques muestras de malware real; para reproducir, usa ficheros sintéticos como los de `pruebas/`.
@@ -21,7 +21,7 @@ Es un proyecto personal mantenido sin garantías de plazo; se intenta responder 
 - It does not open links. URLs and domains in the replies are defanged (`hxxp`, `[.]`).
 - The text of the mail reaches a local model (Ollama). A mail can try to manipulate it (prompt injection): the program scores those phrases and hidden text separately, and the model cannot lower the strong technical indicators. Still, the verdict is a second opinion, not a guarantee.
 - `buzon.env` holds the mailbox password: the program refuses to start unless its mode is 600. Use an app password, not your main one.
-- The enrichment lookups (abuse.ch, public lists, RDAP, optional OTX) send the IPs and domains of the analysed mail to third parties.
+- The enrichment lookups (abuse.ch, RDAP at each TLD's registry or at `rdap.org`, optional OTX) send the IPs and domains of the analysed mail to third parties; the public lists (including IFIN and the IANA catalogue) are only downloaded.
 
 ## Reporting a vulnerability
 Open a private security advisory on GitHub (*Security* tab → *Report a vulnerability*) or, if it is not available, an issue **without** the mail or personal data: describe the file type and the effect, and the sample is requested through a private channel. Do not post real malware samples; to reproduce, use synthetic files like those in `pruebas/`.

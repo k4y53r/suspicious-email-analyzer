@@ -82,7 +82,7 @@ Thunderbird no copia filtros entre cuentas: hay que repetirlo a mano.
 - El correo que el servidor (Gmail, por ejemplo) ya manda a su carpeta Spam no pasa por la bandeja de entrada ni por
   el clasificador de Thunderbird: este filtro no lo ve. Para ese caso, ver 6.1.
 - Los falsos positivos del clasificador también se reenvían. Se quedan en tu equipo, pero el enriquecimiento (si lo activas)
-  consulta sus dominios e IPs en abuse.ch, listas públicas y RDAP.
+  consulta sus dominios e IPs en abuse.ch y RDAP (las listas públicas solo se descargan).
 - Sin comprobar: errores abiertos con los filtros «después de la clasificación» en Linux e IMAP (bugs 1245157 y
   1661989), y un hilo de soporte de 2021 sobre reenvíos de filtros que fallaban con mensajes con adjuntos.
 

@@ -38,7 +38,7 @@ EXIGIR_DKIM=si
 
 Test without IMAP or SMTP, printing the reply it would send: `python3 buzon.py --eml a.eml b.eml …`. It uses an in-memory
 database, so it is good for testing duplicates without touching the real one. By default it queries the enrichment services
-(abuse.ch, RDAP, Team Cymru, Tranco) and creates `~/.local/state/analista-correo/listas/`; for a test with no external
+(abuse.ch, RDAP and its IANA catalogue, Team Cymru, Tranco, the IFIN lists) and creates `~/.local/state/analista-correo/listas/`; for a test with no external
 network connection, prefix `ANALISTA_CORREO_SIN_ENRIQUECER=1` (only the local Ollama is needed).
 
 ## Database and duplicates

@@ -70,8 +70,9 @@ Despliegue automático en un LXC de Proxmox (o en un Debian): [`despliegue/`](de
 - Un modelo de 7B se equivoca: trata el veredicto como una segunda opinión. Los correos pueden intentar manipular al
   modelo (inyección); por eso el texto oculto y las frases de inyección puntúan aparte y el modelo no puede rebajar los
   indicadores fuertes.
-- Las consultas de enriquecimiento (abuse.ch, listas públicas, RDAP, OTX) envían a esos servicios IP y dominios del
-  correo. En `analizar_correo.py` solo ocurren con `--enriquecer`; el modo buzón (`buzon.py`) las hace siempre salvo que
+- Las consultas de enriquecimiento (abuse.ch, RDAP, OTX) envían a esos servicios IP y dominios del correo; RDAP va
+  directo al registro de cada TLD (o a `rdap.org` si no responde). Las listas públicas (Tor, Feodo, DROP, Tranco, IFIN, catálogo
+  RDAP de IANA) solo se descargan: no envían nada del correo. En `analizar_correo.py` solo ocurren con `--enriquecer`; el modo buzón (`buzon.py`) las hace siempre salvo que
   pongas `ANALISTA_CORREO_SIN_ENRIQUECER=1` en el entorno de `run.sh`/cron.
 - Seguridad: ver `SECURITY.md`. Licencia: AGPL-3.0-only (`LICENSE`), copyright © 2026 k4y53r: puedes usarlo, modificarlo y compartirlo, pero las versiones modificadas (también las ofrecidas como servicio en red) deben publicarse con la misma licencia.
 

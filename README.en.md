@@ -75,7 +75,9 @@ systemd timer (see [Mailbox mode](docs/mailbox-mode.en.md)). To forward from Thu
 - A 7B model gets things wrong: treat the verdict as a second opinion. Mails can try to manipulate the model (prompt
   injection); that is why hidden text and injection phrases score separately and the model cannot lower strong
   indicators.
-- The enrichment lookups (abuse.ch, public lists, RDAP, OTX) send the IPs and domains of the mail to those services.
+- The enrichment lookups (abuse.ch, RDAP, OTX) send the IPs and domains of the mail to those services; RDAP goes
+  straight to each TLD's registry (or to `rdap.org` if it does not answer). The public lists (Tor, Feodo, DROP, Tranco, IFIN,
+  the IANA RDAP catalogue) are only downloaded: nothing from the mail is sent.
   In `analizar_correo.py` they only happen with `--enriquecer`; mailbox mode (`buzon.py`) always does them unless you set
   `ANALISTA_CORREO_SIN_ENRIQUECER=1` in the environment of `run.sh`/cron.
 - Security: see `SECURITY.md`. License: AGPL-3.0-only (`LICENSE`), copyright © 2026 k4y53r: you may use, modify and share it, but modified versions (including ones offered as a network service) must be published under the same license.

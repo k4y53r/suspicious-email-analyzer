@@ -34,7 +34,7 @@ REMITENTES=yo@example.org,otra-cuenta@example.org
 EXIGIR_DKIM=si
 ```
 
-Prueba sin IMAP ni SMTP, que imprime la respuesta que enviaría: `python3 buzon.py --eml a.eml b.eml …`. Usa una base de datos en memoria, así que sirve para probar duplicados sin tocar la real. Por defecto consulta los servicios de enriquecimiento (abuse.ch, RDAP, Team Cymru, Tranco) y crea `~/.local/state/analista-correo/listas/`; para una prueba sin ninguna conexión de red externa, antepón `ANALISTA_CORREO_SIN_ENRIQUECER=1` (solo hace falta el Ollama local).
+Prueba sin IMAP ni SMTP, que imprime la respuesta que enviaría: `python3 buzon.py --eml a.eml b.eml …`. Usa una base de datos en memoria, así que sirve para probar duplicados sin tocar la real. Por defecto consulta los servicios de enriquecimiento (abuse.ch, RDAP y su catálogo de IANA, Team Cymru, Tranco, las listas de IFIN) y crea `~/.local/state/analista-correo/listas/`; para una prueba sin ninguna conexión de red externa, antepón `ANALISTA_CORREO_SIN_ENRIQUECER=1` (solo hace falta el Ollama local).
 
 ## Base de datos y duplicados
 
