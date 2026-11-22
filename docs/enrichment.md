@@ -61,7 +61,10 @@ abuse.ch (desde la 1.4), con la Auth-Key gratuita `ABUSECH_AUTH_KEY` en `buzon.e
   dominios válidos; una descarga vacía o que pierde más de la mitad no pisa la anterior). Si un host del correo o de
   sus enlaces, o un dominio padre, figura en alguna, sale un hallazgo con 0 puntos (`PUNTOS["ifin"]`): un enlace a un
   pastebin o a un hosting gratuito no es malicioso por sí solo, así que no cuenta como señal fuerte ni como puerta. No
-  se envía nada del correo: solo se descargan las listas. Pruebas: `pruebas/probar_ifin.py` y `pruebas/probar_rdap.py`.
+  se envía nada del correo: solo se descargan las listas. Licencia (leída el 2026-11-22): el sitio de las listas las
+  declara bajo AGPL-3.0 y sin garantía; el foro de IFIN usa CC BY-NC-ND 4.0 para su propio contenido, y sus condiciones
+  de uso excluyen `lists.ifin.network`. Este repo no incluye ni redistribuye las listas: las descarga cada instalación.
+  Autoría según las propias listas: Mike Bunner (B'ad Samurai) y Erik Hjelmvik (Netresec). Pruebas: `pruebas/probar_ifin.py` y `pruebas/probar_rdap.py`.
 - **OTX** (opcional, `ANALISTA_CORREO_OTX_CMD`: un comando que imprime las pulses del valor): solo cuentan las pulses que hablan de amenazas por nombre o
   etiquetas. Muchas otras son volcados de URLscan o listas de rastreo con dominios legítimos.
 - Los resultados se guardan en `cache_enriquecimiento` (OTX 7 días, RDAP y Cymru 30, PTR y su alias 7; el catálogo RDAP de IANA y las listas de IFIN, 7); los errores no.

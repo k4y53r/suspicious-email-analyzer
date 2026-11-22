@@ -51,7 +51,10 @@ third-party download mirrors. They are downloaded once a week to `listas/ifin-<l
 an empty download, or one that loses more than half of the list, never replaces the previous one). If a host of the
 mail or of its links, or a parent domain, is in one of them, a finding with **0 points** (`PUNTOS["ifin"]`) is added:
 a link to a paste site or to free hosting is not malicious by itself, so it does not count as a strong signal or as a
-gate. Nothing from the mail is sent: the lists are only downloaded. Tests: `pruebas/probar_ifin.py` and
+gate. Nothing from the mail is sent: the lists are only downloaded. Licence (read on 2026-11-22): the lists site declares
+them under AGPL-3.0 with no warranty; the IFIN forum uses CC BY-NC-ND 4.0 for its own content, and its terms of use do
+not cover `lists.ifin.network`. This repo neither includes nor redistributes the lists: each installation downloads
+them. Authorship according to the lists themselves: Mike Bunner (B'ad Samurai) and Erik Hjelmvik (Netresec). Tests: `pruebas/probar_ifin.py` and
 `pruebas/probar_rdap.py`. Results are cached in `cache_enriquecimiento` (OTX 7 days, RDAP and Cymru 30, PTR and its
 alias 7; the IANA RDAP catalogue and the IFIN lists, 7); errors are not.
 
