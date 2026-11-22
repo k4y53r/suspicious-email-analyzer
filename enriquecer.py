@@ -132,9 +132,18 @@ _ultima_rdap = 0.0
 _catalogo_rdap = None
 
 
+def partir_url(u):
+    """urlsplit que devuelve None ante una URL mal formada (http://[abc/x lanza ValueError); las URLs vienen del correo."""
+    try:
+        return urllib.parse.urlsplit(u)
+    except ValueError:
+        return None
+
+
 class SoloHttps(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if urllib.parse.urlsplit(newurl).scheme != "https":  # nunca se baja de https a http
+        destino = partir_url(newurl)
+        if destino is None or destino.scheme != "https":  # nunca se baja de https a http
             return None
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -605,13 +614,9 @@ def enriquecer(iocs, db, solo_infra=False, huella=""):
                     (ESTADO / "listas" / ("ifin-%s.txt" % s)).touch(exist_ok=True)
                 break
     hosts = {d["dominio"] for d in iocs["dominios"] if DOMINIO.fullmatch(d["dominio"])}
-    for u in iocs.get("urls", []):
-        try:  # una URL mal formada (http://[abc/x) no debe romper el análisis
-            h = urllib.parse.urlsplit(u).hostname
-        except ValueError:
-            continue
-        if h and DOMINIO.fullmatch(h):
-            hosts.add(h)
+    for p in map(partir_url, iocs.get("urls", [])):  # una URL mal formada (http://[abc/x) no debe romper el análisis
+        if p is not None and p.hostname and DOMINIO.fullmatch(p.hostname):
+            hosts.add(p.hostname)
     for host in sorted(hosts):
         hallado = en_ifin(host, listas_ifin)
         if hallado:
@@ -653,8 +658,8 @@ def enriquecer(iocs, db, solo_infra=False, huella=""):
             hallar_abusech("dominio", raiz, "urlhaus", consultar("urlhaus", raiz, lambda v: urlhaus(clave, v, "host")))
         # En alojamiento compartido el IOC es la URL. Sin consulta ni fragmento: suelen llevar el usuario o un token.
         compartidos = {d["dominio"] for d in iocs["dominios"] if d["compartido"]}
-        urls = sorted({urllib.parse.urlsplit(u)._replace(query="", fragment="").geturl() for u in iocs.get("urls", [])
-                       if (urllib.parse.urlsplit(u).hostname or "") in compartidos})
+        partidas = [p for p in map(partir_url, iocs.get("urls", [])) if p is not None]
+        urls = sorted({p._replace(query="", fragment="").geturl() for p in partidas if (p.hostname or "") in compartidos})
         for u in urls[:10]:
             hallar_abusech("url", u, "urlhaus", consultar("urlhaus", u, lambda v: urlhaus(clave, v, "url")))
         for h in iocs.get("hashes", []):

@@ -137,5 +137,32 @@ req = en.urllib.request.Request("https://a.example/x")
 comprobar("redirección a http rechazada", h.redirect_request(req, None, 302, "x", {}, "http://a.example/y") is None)
 comprobar("redirección a https admitida", h.redirect_request(req, None, 302, "x", {}, "https://b.example/y") is not None)
 
+# URLs mal formadas (vienen del correo): ninguna rompe el enriquecimiento
+comprobar("partir_url: URL válida", en.partir_url("https://a.example/x?y=1").hostname == "a.example")
+comprobar("partir_url: http://[abc/x da None", en.partir_url("http://[abc/x") is None)
+comprobar("redirección con Location mal formada rechazada", h.redirect_request(req, None, 302, "x", {}, "https://[abc/x") is None)
+en.ESTADO = Path(tempfile.mkdtemp())
+(en.ESTADO / "listas").mkdir(mode=0o700)
+for s in en.IFIN_LISTAS:
+    (en.ESTADO / "listas" / ("ifin-%s.txt" % s)).touch()
+(en.ESTADO / "listas" / "rdap-dns.fallo").touch()
+en._catalogo_rdap = {}
+en.lista = lambda n: []
+en.populares = lambda: set()
+en.otx = lambda v: None
+en.rdap = lambda d: {"sin_servicio": True}
+en.clave_abusech = lambda: "clave-de-prueba"
+en.threatfox = lambda c, v: {"encontrado": False}
+en.urlhaus = lambda c, v, t: {"encontrado": False}
+en.bazaar = lambda c, s: {"encontrado": False}
+db = en.abrir_db(str(en.ESTADO / "a.db"))
+iocs = {"ips": [], "dominios": [{"dominio": "tienda.compartido.example", "raiz": "compartido.example", "compartido": True, "roles": []}],
+        "urls": ["http://[abc/x", "https://tienda.compartido.example/a?token=1#f", "https://[::1/y"], "hashes": []}
+try:
+    r = en.enriquecer(iocs, db)
+    comprobar("bloque abuse.ch con URLs mal formadas no lanza", isinstance(r, dict) and not [e for e in r["errores"] if "ValueError" in e])
+except Exception as e:
+    comprobar("bloque abuse.ch con URLs mal formadas no lanza (%s)" % type(e).__name__, False)
+
 print("\n%s" % ("TODO OK" if not fallos else "FALLAN: %s" % ", ".join(fallos)))
 sys.exit(1 if fallos else 0)
