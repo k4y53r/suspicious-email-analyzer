@@ -36,9 +36,24 @@ least 80. Only the fact of a hit and a summary are stored, not the response. Non
 forbid "high volume" automated access without giving a figure, and they may withdraw the key without notice.
 
 Origin IP also checks the Tor, Feodo (C2) and Spamhaus DROP lists, downloaded to `~/.local/state/analista-correo/listas/`
-once a day, and OTX if it is IPv4. Root domain: OTX and RDAP (registration date). RDAP does not cover `.es` or `.pp.ua`
-and is skipped for private suffixes such as `uk.com`; rdap.org returns 429 after ~10 consecutive queries, hence the 2 s
-pause. Results are cached in `cache_enriquecimiento` (OTX 7 days, RDAP and Cymru 30, PTR and its alias 7); errors are not.
+once a day, and OTX if it is IPv4. Root domain: OTX and RDAP (registration date). RDAP is queried directly at the registry server of each TLD, taken
+from the IANA bootstrap catalogue (`https://data.iana.org/rdap/dns.json`, once a week in
+`~/.local/state/analista-correo/listas/rdap-dns.json`; it is validated, and an empty or much smaller catalogue never
+replaces the previous one). It used to go through `rdap.org`, which sits behind Cloudflare: in some countries operators
+block Cloudflare ranges by IP (for example during football matches in Spain) and TLS fails with a foreign certificate.
+If the registry does not answer, `rdap.org` is tried; a TLD that is not in the catalogue (`.es`, `.pp.ua`) is skipped.
+RDAP is also skipped for private suffixes such as `uk.com`, with a 2 s pause between queries.
+
+IFIN lists (context only, 0 points): nine domain lists from [lists.ifin.network](https://lists.ifin.network/)
+(AGPL-3.0, no warranty) of legitimate services that get abused: free hosting with subdomains, chat APIs and webhooks,
+webhooks as a service, paste sites (text and code), port-forwarding tunnels, IPFS gateways, online PDF editors and
+third-party download mirrors. They are downloaded once a week to `listas/ifin-<list>.txt` (2 MB max, valid domains only;
+an empty download, or one that loses more than half of the list, never replaces the previous one). If a host of the
+mail or of its links, or a parent domain, is in one of them, a finding with **0 points** (`PUNTOS["ifin"]`) is added:
+a link to a paste site or to free hosting is not malicious by itself, so it does not count as a strong signal or as a
+gate. Nothing from the mail is sent: the lists are only downloaded. Tests: `pruebas/probar_ifin.py` and
+`pruebas/probar_rdap.py`. Results are cached in `cache_enriquecimiento` (OTX 7 days, RDAP and Cymru 30, PTR and its
+alias 7; the IANA RDAP catalogue and the IFIN lists, 7); errors are not.
 
 ```
 python3 enriquecer.py --simular        # what would change in stored analyses, without touching them

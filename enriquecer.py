@@ -26,16 +26,31 @@ LISTAS = {"tor": "https://check.torproject.org/torbulkexitlist",
 # Dominios populares: OTX y abuse.ch los meten en pulses de amenazas por cualquier mención (medido en pulses reales de plataformas populares)
 # No se consultan, salvo donde cualquiera crea subdominios.
 TRANCO = "https://tranco-list.eu/top-1m.csv.zip"
+# Listas de IFIN (lists.ifin.network, AGPL-3.0, sin garantía) de servicios legítimos que se abusan. Solo dan contexto:
+# PUNTOS["ifin"] = 0, porque un enlace a pastebin.com o a un hosting gratuito no es malicioso por sí solo.
+IFIN = "https://lists.ifin.network/lists/%s/%s_domain.txt"
+IFIN_LISTAS = {"commonly-abused-site-hosts": "hosting gratuito con subdominios, muy usado en phishing",
+               "chat-hooks": "API o webhook de una plataforma de chat (canal de exfiltración o de mando)",
+               "webhooks-as-a-service": "servicio de webhooks (recogida de datos robados)",
+               "paste-bins": "sitio de pegado de texto (alojamiento de cargas)",
+               "paste-bins---code": "sitio de pegado de código (alojamiento de cargas)",
+               "port-forwarding-services": "túnel inverso (C2 o phishing tras un túnel)",
+               "ipfs-gateways": "pasarela IPFS (phishing y cargas)",
+               "online-pdf-editors": "editor de PDF en línea (señuelo de documentos)",
+               "third-party-file-mirrors": "mirror de descargas de terceros (software posiblemente manipulado)"}
+IFIN_MAX_BYTES = 2 * 1024 * 1024
+IANA_RDAP = "https://data.iana.org/rdap/dns.json"
+RDAP_MAX_BYTES = 2 * 1024 * 1024
 TOP_POPULARES = 100000
 ANFITRIONES_LIBRES = {"duckdns.org", "ddns.net", "no-ip.org", "ngrok-free.app", "ngrok.io", "blogspot.com",
                       "godaddysites.com", "glitch.me", "000webhostapp.com", "r2.dev", "pages.dev", "web.app",
                       "github.io", "netlify.app", "vercel.app", "firebaseapp.com", "weebly.com", "wixsite.com"}
 CADUCIDAD_DIAS = {"tranco": 7, "otx": 7, "rdap": 30, "lista": 1, "urlhaus": 7, "threatfox": 7, "bazaar": 7, "cymru": 30,
-                  "cymru_as": 30, "ptr": 7, "alias_ptr": 7}
+                  "cymru_as": 30, "ptr": 7, "alias_ptr": 7, "ifin": 7, "rdap_catalogo": 7}
 PUNTOS = {"otx_grave": 40, "otx_ip": 20, "otx_dominio": 25, "otx_leve": 10, "feodo": 40, "drop": 30, "tor": 15,
           "dominio_nuevo": 20, "dominio_reciente": 10, "dominio_no_registrado": 10,
           "abusech_grave": 40, "abusech_antiguo": 25, "ptr_marca": 25, "ptr_generico": 10, "ptr_ausente": 10,
-          "prefijo_historial": 15, "asn_historial": 10, "historial_alto": 20, "info": 0}
+          "prefijo_historial": 15, "asn_historial": 10, "historial_alto": 20, "ifin": 0, "info": 0}
 SUELO_GRAVE = 80  # como un adjunto ejecutable
 TOPE = 40  # como las URLs: el enriquecimiento suma, pero no decide solo
 DIAS_NUEVO, DIAS_RECIENTE = 30, 365
@@ -114,28 +129,124 @@ def otx(valor):
 
 
 _ultima_rdap = 0.0
+_catalogo_rdap = None
 
 
-def rdap(dom):
-    global _ultima_rdap
-    time.sleep(max(0.0, _ultima_rdap + PAUSA_RDAP - time.time()))
-    _ultima_rdap = time.time()
-    # El registro de .org (tras Cloudflare) da 403 al User-Agent por defecto de Python (medido).
-    req = urllib.request.Request("https://rdap.org/domain/" + dom, headers={"Accept": "application/rdap+json",
-                                                                         "User-Agent": "analista-correo"})
+class SoloHttps(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urllib.parse.urlsplit(newurl).scheme != "https":  # nunca se baja de https a http
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_opener = urllib.request.build_opener(SoloHttps)
+
+
+def servidores_rdap():
+    """{tld: URL base del servidor RDAP del registro} según el catálogo de IANA, descargado como mucho una vez por
+    semana en ESTADO/listas/rdap-dns.json. Desde 2026-11-22 se consulta al registro directamente: rdap.org está tras
+    Cloudflare y, algunas tardes de fin de semana, los bloqueos de LaLiga lo dejan con un certificado ajeno. Un
+    catálogo vacío, inválido o muy reducido no pisa el anterior; sin catálogo se devuelve {} (y se usa rdap.org)."""
+    global _catalogo_rdap
+    f = ESTADO / "listas" / "rdap-dns.json"
+    fallo = f.with_name("rdap-dns.fallo")  # marca de la última descarga fallida: se reintenta a la hora, no en cada correo
+    vieja = not f.exists() or time.time() - f.stat().st_mtime > CADUCIDAD_DIAS["rdap_catalogo"] * 86400
+    puede = not (fallo.exists() and time.time() - fallo.stat().st_mtime < 3600)
+    if _catalogo_rdap is not None and (not vieja or not puede):
+        return _catalogo_rdap
+
+    def leer(datos):
+        r = {}
+        for s in json.loads(datos).get("services", []):
+            for tld in s[0]:
+                for u in s[1]:
+                    p = urllib.parse.urlsplit(u)
+                    if p.scheme == "https" and p.hostname and DOMINIO.fullmatch(p.hostname) and re.fullmatch(r"[a-z0-9-]{2,63}", str(tld).lower()):
+                        r.setdefault(str(tld).lower(), u if u.endswith("/") else u + "/")
+        return r
+    anterior = {}
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            d = json.load(r)
+        anterior = leer(f.read_bytes()) if f.exists() else {}
+    except Exception:
+        pass
+    if vieja and puede:
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            with _opener.open(urllib.request.Request(IANA_RDAP, headers={"User-Agent": "analista-correo"}), timeout=15) as r:
+                datos = r.read(RDAP_MAX_BYTES + 1)
+            if len(datos) > RDAP_MAX_BYTES:
+                raise RuntimeError("catálogo de más de %d bytes" % RDAP_MAX_BYTES)
+            nuevo = leer(datos)
+            if len(nuevo) < 100 or (anterior and len(nuevo) * 2 < len(anterior)):
+                raise RuntimeError("catálogo con %d TLD (antes %d)" % (len(nuevo), len(anterior)))
+            tmp = f.with_name("%s.%d.tmp" % (f.name, os.getpid()))
+            tmp.write_bytes(datos)
+            tmp.replace(f)
+            anterior = nuevo
+            fallo.unlink(missing_ok=True)
+        except Exception:
+            try:
+                fallo.touch()
+            except OSError:
+                pass
+    _catalogo_rdap = anterior
+    return anterior
+
+
+def _consulta_rdap(url):
+    # El registro de .org (tras Cloudflare) da 403 al User-Agent por defecto de Python (medido).
+    req = urllib.request.Request(url, headers={"Accept": "application/rdap+json", "User-Agent": "analista-correo"})
+    try:
+        with _opener.open(req, timeout=15) as r:
+            datos = r.read(RDAP_MAX_BYTES + 1)
+        if len(datos) > RDAP_MAX_BYTES:
+            raise RuntimeError("respuesta RDAP de más de %d bytes" % RDAP_MAX_BYTES)
+        d = json.loads(datos)
     except urllib.error.HTTPError as e:
-        # rdap.org redirige al registro del TLD: un 404 del registro es «no existe»; uno de rdap.org, o un 501,
-        # es que ese TLD no tiene RDAP (.es, .pp.ua).
-        if e.code == 404 and "rdap.org" not in (e.url or ""):
+        # Un 404 del registro es «no existe»; uno de rdap.org, o un 501, es que ese TLD no tiene RDAP (.es, .pp.ua).
+        if e.code == 404 and "rdap.org" not in (e.url or url):
             return {"registrado": False}
         if e.code in (404, 501):
             return {"sin_servicio": True}
         raise
     alta = next((e["eventDate"] for e in d.get("events", []) if e.get("eventAction") == "registration"), None)
     return {"registrado": True, "alta": alta}
+
+
+def rdap(dom):
+    global _ultima_rdap
+    time.sleep(max(0.0, _ultima_rdap + PAUSA_RDAP - time.time()))
+    _ultima_rdap = time.time()
+    servidores = servidores_rdap()
+    base = servidores.get(dom.rsplit(".", 1)[-1])
+    if servidores and not base:
+        return {"sin_servicio": True}  # el TLD no tiene servidor RDAP en el catálogo de IANA (.es…)
+    if base:
+        try:
+            return _consulta_rdap(base + "domain/" + dom)
+        except urllib.error.HTTPError:
+            raise
+        except OSError:
+            pass  # el registro no responde o su TLS falla: se prueba rdap.org, que redirige al mismo registro
+    return _consulta_rdap("https://rdap.org/domain/" + dom)
+
+
+def rdap(dom):
+    global _ultima_rdap
+    time.sleep(max(0.0, _ultima_rdap + PAUSA_RDAP - time.time()))
+    _ultima_rdap = time.time()
+    servidores = servidores_rdap()
+    base = servidores.get(dom.rsplit(".", 1)[-1])
+    if servidores and not base:
+        return {"sin_servicio": True}  # el TLD no tiene servidor RDAP en el catálogo de IANA (.es…)
+    if base:
+        try:
+            return _consulta_rdap(base + "domain/" + dom)
+        except urllib.error.HTTPError:
+            raise
+        except OSError:
+            pass  # el registro no responde o su TLS falla: se prueba rdap.org, que redirige al mismo registro
+    return _consulta_rdap("https://rdap.org/domain/" + dom)
 
 
 def edad_alta(alta):
@@ -171,6 +282,44 @@ def lista(nombre):
             except ValueError:
                 pass
     return redes
+
+
+def ifin(slug):
+    """Dominios de una lista de IFIN, descargados como mucho una vez por semana en ESTADO/listas. Una descarga vacía,
+    demasiado grande o que pierde más de la mitad de la lista anterior no la pisa (queda la copia vieja)."""
+    f = ESTADO / "listas" / ("ifin-%s.txt" % slug)
+    antiguo = set(f.read_text().split()) if f.exists() else set()
+    if not f.exists() or time.time() - f.stat().st_mtime > CADUCIDAD_DIAS["ifin"] * 86400:
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            with urllib.request.urlopen(IFIN % (slug, slug), timeout=10) as r:
+                datos = r.read(IFIN_MAX_BYTES + 1)
+            if len(datos) > IFIN_MAX_BYTES:
+                raise RuntimeError("más de %d bytes" % IFIN_MAX_BYTES)
+            nuevo = {l.strip().lower().rstrip(".") for l in datos.decode("utf-8", "replace").splitlines()}
+            nuevo = {d for d in nuevo if DOMINIO.fullmatch(d)}
+            if not nuevo or (antiguo and len(nuevo) * 2 < len(antiguo)):
+                raise RuntimeError("lista vacía o reducida a menos de la mitad (%d de %d)" % (len(nuevo), len(antiguo)))
+            tmp = f.with_name("%s.%d.tmp" % (f.name, os.getpid()))
+            tmp.write_text("\n".join(sorted(nuevo)) + "\n")
+            tmp.replace(f)
+            return nuevo
+        except Exception:
+            f.touch(exist_ok=True)  # se reintenta en una semana; entre tanto sirve la copia vieja (o vacía)
+            if not antiguo:
+                raise
+    return antiguo
+
+
+def en_ifin(host, listas):
+    """Primera lista de IFIN que contiene el host o alguno de sus dominios padre (hasta dos etiquetas)."""
+    etiquetas = host.lower().rstrip(".").split(".")
+    for k in range(len(etiquetas) - 1):
+        candidato = ".".join(etiquetas[k:])
+        for slug, dominios in listas.items():
+            if candidato in dominios:
+                return slug, candidato
+    return None
 
 
 def dig(*args):
@@ -445,6 +594,29 @@ def enriquecer(iocs, db, solo_infra=False, huella=""):
     except Exception as e:
         pop = set()
         errores.append("tranco: %s: %s" % (type(e).__name__, str(e)[:150]))
+    listas_ifin = {}
+    for slug in IFIN_LISTAS:
+        try:
+            listas_ifin[slug] = ifin(slug)
+        except Exception as e:
+            errores.append("ifin %s: %s: %s" % (slug, type(e).__name__, str(e)[:150]))
+            if isinstance(e, OSError) and not isinstance(e, urllib.error.HTTPError):  # sin red: no se insiste en cada correo
+                for s in IFIN_LISTAS:
+                    (ESTADO / "listas" / ("ifin-%s.txt" % s)).touch(exist_ok=True)
+                break
+    hosts = {d["dominio"] for d in iocs["dominios"] if DOMINIO.fullmatch(d["dominio"])}
+    for u in iocs.get("urls", []):
+        try:  # una URL mal formada (http://[abc/x) no debe romper el análisis
+            h = urllib.parse.urlsplit(u).hostname
+        except ValueError:
+            continue
+        if h and DOMINIO.fullmatch(h):
+            hosts.add(h)
+    for host in sorted(hosts):
+        hallado = en_ifin(host, listas_ifin)
+        if hallado:
+            hallar("dominio", host, "ifin", "en la lista IFIN «%s» (%s); solo contexto, no suma" % (
+                hallado[0], IFIN_LISTAS[hallado[0]]), "ifin")
     exentos = [r for r in raices if r in pop and r not in ANFITRIONES_LIBRES]
     raices = [r for r in raices if r not in exentos]
     for raiz in raices:

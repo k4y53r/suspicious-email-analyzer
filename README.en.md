@@ -86,7 +86,7 @@ The (optional) enrichment uses public services and lists with their own terms of
 [abuse.ch](https://abuse.ch) (ThreatFox, URLhaus; a free Auth-Key is required), the [Tor](https://check.torproject.org/torbulkexitlist)
 exit list, [Feodo Tracker](https://feodotracker.abuse.ch/), [Spamhaus DROP](https://www.spamhaus.org/drop/) (its own terms),
 the [Tranco](https://tranco-list.eu) ranking (cite it if you publish results that use it), RDAP (public registries of
-each RIR/registry) and, if you configure it, AlienVault OTX.
+each RIR/registry, located through the [IANA](https://data.iana.org/rdap/) catalogue), the nine [IFIN lists](https://lists.ifin.network/) of abusable services (AGPL-3.0, context only) and, if you configure it, AlienVault OTX.
 
 ## Usage
 

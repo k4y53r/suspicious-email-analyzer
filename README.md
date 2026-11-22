@@ -77,7 +77,7 @@ Despliegue automático en un LXC de Proxmox (o en un Debian): [`despliegue/`](de
 
 ## Fuentes de terceros y atribución
 
-El enriquecimiento (opcional) usa servicios y listas públicas con sus propios términos de uso; revísalos antes de un uso intensivo: [abuse.ch](https://abuse.ch) (ThreatFox, URLhaus; exige una Auth-Key gratuita), la lista de salidas de [Tor](https://check.torproject.org/torbulkexitlist), [Feodo Tracker](https://feodotracker.abuse.ch/), [Spamhaus DROP](https://www.spamhaus.org/drop/) (condiciones de uso propias), el ranking [Tranco](https://tranco-list.eu) (cítalo si publicas resultados que lo usen), RDAP (registros públicos de cada RIR/registro) y, si lo configuras, AlienVault OTX.
+El enriquecimiento (opcional) usa servicios y listas públicas con sus propios términos de uso; revísalos antes de un uso intensivo: [abuse.ch](https://abuse.ch) (ThreatFox, URLhaus; exige una Auth-Key gratuita), la lista de salidas de [Tor](https://check.torproject.org/torbulkexitlist), [Feodo Tracker](https://feodotracker.abuse.ch/), [Spamhaus DROP](https://www.spamhaus.org/drop/) (condiciones de uso propias), el ranking [Tranco](https://tranco-list.eu) (cítalo si publicas resultados que lo usen), RDAP (registros públicos de cada RIR/registro, localizados con el catálogo de [IANA](https://data.iana.org/rdap/)), las nueve [listas de IFIN](https://lists.ifin.network/) de servicios abusables (AGPL-3.0, solo como contexto) y, si lo configuras, AlienVault OTX.
 
 ## Uso
 

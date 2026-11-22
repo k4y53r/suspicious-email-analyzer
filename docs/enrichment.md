@@ -47,11 +47,24 @@ abuse.ch (desde la 1.4), con la Auth-Key gratuita `ABUSECH_AUTH_KEY` en `buzon.e
 
 - **IP de origen**: listas Tor, Feodo (C2) y Spamhaus DROP, descargadas
   a `~/.local/state/analista-correo/listas/` una vez al día, y OTX si es IPv4.
-- **Dominio raíz**: OTX y RDAP (fecha de alta). RDAP no cubre `.es` ni `.pp.ua`, y se salta en sufijos privados
-  como `uk.com`; rdap.org da 429 con ~10 consultas seguidas, por eso hay 2 s de pausa.
+- **Dominio raíz**: OTX y RDAP (fecha de alta). RDAP se consulta directamente al servidor del registro de cada TLD,
+  según el catálogo de IANA (`https://data.iana.org/rdap/dns.json`, una vez por semana en
+  `~/.local/state/analista-correo/listas/rdap-dns.json`; se valida y un catálogo vacío o muy reducido no pisa el
+  anterior). Antes se usaba `rdap.org`, que está tras Cloudflare: en algunos países los operadores bloquean por IP
+  rangos de Cloudflare (p. ej. durante partidos de fútbol en España) y el TLS falla con un certificado ajeno. Si el
+  registro no responde, se prueba `rdap.org`; si el TLD no figura en el catálogo (`.es`, `.pp.ua`), se omite. RDAP se
+  salta también en sufijos privados como `uk.com`; hay 2 s de pausa entre consultas.
+- **Listas de IFIN** (solo contexto, 0 puntos): nueve listas de dominios de [lists.ifin.network](https://lists.ifin.network/)
+  (AGPL-3.0, sin garantía) de servicios legítimos que se abusan: hosting gratuito con subdominios, APIs y webhooks de
+  chat, webhooks como servicio, pastebins (texto y código), túneles de reenvío de puertos, pasarelas IPFS, editores de
+  PDF en línea y mirrors de descargas. Se descargan una vez por semana a `listas/ifin-<lista>.txt` (máx. 2 MB, solo
+  dominios válidos; una descarga vacía o que pierde más de la mitad no pisa la anterior). Si un host del correo o de
+  sus enlaces, o un dominio padre, figura en alguna, sale un hallazgo con 0 puntos (`PUNTOS["ifin"]`): un enlace a un
+  pastebin o a un hosting gratuito no es malicioso por sí solo, así que no cuenta como señal fuerte ni como puerta. No
+  se envía nada del correo: solo se descargan las listas. Pruebas: `pruebas/probar_ifin.py` y `pruebas/probar_rdap.py`.
 - **OTX** (opcional, `ANALISTA_CORREO_OTX_CMD`: un comando que imprime las pulses del valor): solo cuentan las pulses que hablan de amenazas por nombre o
   etiquetas. Muchas otras son volcados de URLscan o listas de rastreo con dominios legítimos.
-- Los resultados se guardan en `cache_enriquecimiento` (OTX 7 días, RDAP y Cymru 30, PTR y su alias 7); los errores no.
+- Los resultados se guardan en `cache_enriquecimiento` (OTX 7 días, RDAP y Cymru 30, PTR y su alias 7; el catálogo RDAP de IANA y las listas de IFIN, 7); los errores no.
 
 ```
 python3 enriquecer.py --simular        # qué cambiaría en los análisis guardados, sin tocarlos
