@@ -1,6 +1,7 @@
 # Cambios
 
 ## Sin publicar
+- `run.sh`: lanzado a mano con opciones (`--uid`…) espera hasta 5 min al lock en lugar de salir sin avisar (el cron sigue saliendo en silencio); `timeout -k 30`; las líneas propias del script con fecha UTC. La documentación del modo buzón dice ahora qué escribe `run.log` (una línea por correo, avisos y errores, no solo errores).
 - `enriquecer.py`: las URLs mal formadas del correo (p. ej. `http://[abc/x`) ya no rompen el enriquecimiento: `partir_url()` sustituye a los `urlsplit` sin proteger (bloque de abuse.ch de alojamiento compartido, redirecciones del RDAP y hosts para IFIN). Pruebas añadidas en `pruebas/probar_rdap.py`.
 - RDAP directo al registro: `rdap()` consulta el servidor RDAP de cada TLD según el catálogo de IANA (semanal, validado) y cae a `rdap.org` si el registro no responde; así no depende de Cloudflare, que algunos operadores bloquean por IP en ciertas franjas (certificado autofirmado ajeno). Un TLD sin servidor en el catálogo se omite. Nunca se baja de https a http en redirecciones. `pruebas/probar_rdap.py` (22 comprobaciones sin red).
 - Listas de IFIN como contexto: nueve listas de dominios de servicios legítimos abusables (hosting gratuito, webhooks y APIs de chat, pastebins, túneles, pasarelas IPFS, editores de PDF en línea, mirrors de descargas), descarga semanal validada, hallazgo con 0 puntos. `pruebas/probar_ifin.py` (20 comprobaciones sin red). `VERSION` sigue en 1.15.

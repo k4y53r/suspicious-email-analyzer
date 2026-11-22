@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [English](mailbox-mode.en.md) · **Castellano**
 
-Hace una pasada por el INBOX y termina. Lo lanza `run.sh` desde cron o un timer de systemd cada pocos minutos, con `flock` para no solapar pasadas y `timeout` de 25 min. Solo escribe en `~/.local/state/analista-correo/run.log` si hay errores; lo analizado queda en `correos/`. `--uid N` (repetible) procesa solo esos UID sin leer.
+Hace una pasada por el INBOX y termina. Lo lanza `run.sh` desde cron o un timer de systemd cada pocos minutos, con `flock` para no solapar pasadas y `timeout` de 25 min (con `-k 30`: si `buzon.py` ignora la señal, se mata a los 30 s). Si lo rediriges a `~/.local/state/analista-correo/run.log` (como en el cron de ejemplo), ahí quedan una línea por correo analizado, los avisos y los errores, con fecha UTC en las de `run.sh`; lo analizado queda en `correos/`. `--uid N` (repetible) procesa solo esos UID sin leer. Lanzado a mano con opciones, `run.sh` espera hasta 5 min a que acabe la pasada del cron en lugar de salir sin avisar.
 
 - Lee los no leídos (máximo 6 por pasada).
 - Solo analiza los de `REMITENTES`. El resto se marca como leído sin responder, para no contestar a

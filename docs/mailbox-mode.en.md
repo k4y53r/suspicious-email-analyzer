@@ -3,8 +3,10 @@
 [← README](../README.en.md) · **English** · [Castellano](mailbox-mode.md)
 
 Makes one pass over the INBOX and exits. `run.sh` launches it from cron or a systemd timer every few minutes, with `flock`
-so passes do not overlap and a 25-minute `timeout`. It only writes to `~/.local/state/analista-correo/run.log` when there
-are errors; what was analysed goes to `correos/`. `--uid N` (repeatable) processes only those unread UIDs.
+so passes do not overlap and a 25-minute `timeout` (with `-k 30`: if `buzon.py` ignores the signal it is killed 30 s later). If you
+redirect it to `~/.local/state/analista-correo/run.log` (as in the example cron), that file gets one line per analysed mail, warnings and errors, with UTC dates on the
+lines written by `run.sh`; what was analysed goes to `correos/`. `--uid N` (repeatable) processes only those unread UIDs. Run by hand with options, `run.sh`
+waits up to 5 min for the cron pass to finish instead of exiting silently.
 
 - Reads the unread mails (at most 6 per pass).
 - Only analyses those from `REMITENTES`. The rest are marked as read without a reply, so it does not answer anybody or
